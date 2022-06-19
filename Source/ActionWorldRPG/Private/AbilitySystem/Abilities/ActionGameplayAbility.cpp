@@ -11,6 +11,8 @@
 #include "Character/ActionCharacterBase.h"
 #include "Character/Player/PlayerBase.h"
 
+#include "ActionBlueprintFunctionLibrary.h"
+
 UActionGameplayAbility::UActionGameplayAbility()
 {
 	// Default to Instance Per Actor

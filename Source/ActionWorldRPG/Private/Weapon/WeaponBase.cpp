@@ -21,12 +21,20 @@ AWeaponBase::AWeaponBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	WeaponMesh3P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-	SetRootComponent(WeaponMesh3P);
+	CollisionComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionComponent"));
+	CollisionComp->InitCapsuleSize(40.0f, 50.0f);
+	CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision); // Manually enable when in pickup mode
+	CollisionComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	RootComponent = CollisionComp;
 
-	WeaponMesh3P->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-	WeaponMesh3P->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	WeaponMesh3PickupRelativeLocation = FVector(0.0f, -25.0f, 0.0f);
+
+	WeaponMesh3P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
+	WeaponMesh3P->SetupAttachment(CollisionComp);
+
 	WeaponMesh3P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh3P->SetRelativeLocation(WeaponMesh3PickupRelativeLocation);
 
 	// Set this actor to never tick
 	PrimaryActorTick.bCanEverTick = false;
@@ -58,6 +66,14 @@ AWeaponBase::AWeaponBase()
 // Called when the game starts or when spawned
 void AWeaponBase::BeginPlay()
 {
+	ResetWeapon();
+
+	if (!OwningCharacter && bSpawnWithCollision)
+	{
+		// Spawned into the world without an owner, enable collision as we are in pickup mode
+		CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+
 	Super::BeginPlay();
 }
 
