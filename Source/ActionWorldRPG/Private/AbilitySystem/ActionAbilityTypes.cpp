@@ -15,8 +15,13 @@ bool FActionGameplayEffectContainerSpec::HasValidTargets() const
 	return TargetData.Num() > 0;
 }
 
-void FActionGameplayEffectContainerSpec::AddTargets(const TArray<FHitResult>& HitResults, const TArray<AActor*>& TargetActors)
+void FActionGameplayEffectContainerSpec::AddTargets(const TArray<FGameplayAbilityTargetDataHandle>& InTargetData, const TArray<FHitResult>& HitResults, const TArray<AActor*>& TargetActors)
 {
+	for (const FGameplayAbilityTargetDataHandle& TD : InTargetData)
+	{
+		TargetData.Append(TD);
+	}
+
 	for (const FHitResult& HitResult : HitResults)
 	{
 		FGameplayAbilityTargetData_SingleTargetHit* NewData = new FGameplayAbilityTargetData_SingleTargetHit(HitResult);
@@ -29,4 +34,9 @@ void FActionGameplayEffectContainerSpec::AddTargets(const TArray<FHitResult>& Hi
 		NewData->TargetActorArray.Append(TargetActors);
 		TargetData.Add(NewData);
 	}
+}
+
+void FActionGameplayEffectContainerSpec::ClearTargets()
+{
+	TargetData.Clear();
 }

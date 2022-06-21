@@ -68,6 +68,67 @@ FGameplayAbilityTargetDataHandle UActionGameplayAbility::MakeGameplayAbilityTarg
 	return TargetData;
 }
 
+FActionGameplayEffectContainerSpec UActionGameplayAbility::MakeEffectContainerSpecFromContainer(const FActionGameplayEffectContainer& Container, const FGameplayEventData& EventData, int32 OverrideGameplayLevel)
+{
+	// First figure out our actor info
+	FActionGameplayEffectContainerSpec ReturnSpec;
+	AActor* OwningActor = GetOwningActorFromActorInfo();
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	AActionCharacterBase* AvatarCharacter = Cast<AActionCharacterBase>(AvatarActor);
+	UActionAbilitySystemComponent* OwningASC = UActionAbilitySystemComponent::GetAbilitySystemComponentFromActor(OwningActor);
+
+	if (OwningASC)
+	{
+		// If we have a target type, run the targeting logic. This is optional, targets can be added later
+		if (Container.TargetType.Get())
+		{
+			TArray<FHitResult> HitResults;
+			TArray<AActor*> TargetActors;
+			TArray<FGameplayAbilityTargetDataHandle> TargetData;
+			const UActionTargetType* TargetTypeCDO = Container.TargetType.GetDefaultObject();
+			TargetTypeCDO->GetTargets(AvatarCharacter, AvatarActor, EventData, TargetData, HitResults, TargetActors);
+			ReturnSpec.AddTargets(TargetData, HitResults, TargetActors);
+		}
+
+		// If we don't have an override level, use the ability level
+		if (OverrideGameplayLevel == INDEX_NONE)
+		{
+			//OverrideGameplayLevel = OwningASC->GetDefaultAbilityLevel();
+			OverrideGameplayLevel = GetAbilityLevel();
+		}
+
+		// Build GameplayEffectSpecs for each applied effect
+		for (const TSubclassOf<UGameplayEffect>& EffectClass : Container.TargetGameplayEffectClasses)
+		{
+			ReturnSpec.TargetGameplayEffectSpecs.Add(MakeOutgoingGameplayEffectSpec(EffectClass, OverrideGameplayLevel));
+		}
+	}
+	return ReturnSpec;
+}
+
+FActionGameplayEffectContainerSpec UActionGameplayAbility::MakeEffectContainerSpec(FGameplayTag ContainerTag, const FGameplayEventData& EventData, int32 OverrideGameplayLevel)
+{
+	FActionGameplayEffectContainer* FoundContainer = EffectContainerMap.Find(ContainerTag);
+
+	if (FoundContainer)
+	{
+		return MakeEffectContainerSpecFromContainer(*FoundContainer, EventData, OverrideGameplayLevel);
+	}
+	return FActionGameplayEffectContainerSpec();
+}
+
+TArray<FActiveGameplayEffectHandle> UActionGameplayAbility::ApplyEffectContainerSpec(const FActionGameplayEffectContainerSpec& ContainerSpec)
+{
+	TArray<FActiveGameplayEffectHandle> AllEffects;
+
+	// Iterate list of effect specs and apply them to their target data
+	for (const FGameplayEffectSpecHandle& SpecHandle : ContainerSpec.TargetGameplayEffectSpecs)
+	{
+		AllEffects.Append(K2_ApplyGameplayEffectSpecToTarget(SpecHandle, ContainerSpec.TargetData));
+	}
+	return AllEffects;
+}
+
 UObject* UActionGameplayAbility::K2_GetSourceObject(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo& ActorInfo) const
 {
 	return GetSourceObject(Handle, &ActorInfo);

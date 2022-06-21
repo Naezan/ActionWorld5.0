@@ -71,8 +71,8 @@ public:
 		bool bCannotActivateWhileInteracting;
 
 	// Map of gameplay tags to gameplay effect containers
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameplayEffects")
-	//	TMap<FGameplayTag, FGSGameplayEffectContainer> EffectContainerMap;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameplayEffects")
+		TMap<FGameplayTag, FActionGameplayEffectContainer> EffectContainerMap;
 
 	// If an ability is marked as 'ActivateAbilityOnGranted', activate them immediately when given here
 	// Epic's comment: Projects may want to initiate passives or do other "BeginPlay" type of logic here.
@@ -84,17 +84,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 		FGameplayAbilityTargetDataHandle MakeGameplayAbilityTargetDataHandleFromHitResults(const TArray<FHitResult> HitResults);
 
-	// Make gameplay effect container spec to be applied later, using the passed in container
-	//UFUNCTION(BlueprintCallable, Category = Ability, meta = (AutoCreateRefTerm = "EventData"))
-	//	virtual FGSGameplayEffectContainerSpec MakeEffectContainerSpecFromContainer(const FGSGameplayEffectContainer& Container, const FGameplayEventData& EventData, int32 OverrideGameplayLevel = -1);
+	 //Make gameplay effect container spec to be applied later, using the passed in container
+	UFUNCTION(BlueprintCallable, Category = Ability, meta = (AutoCreateRefTerm = "EventData"))
+		virtual FActionGameplayEffectContainerSpec MakeEffectContainerSpecFromContainer(const FActionGameplayEffectContainer& Container, const FGameplayEventData& EventData, int32 OverrideGameplayLevel = -1);
 
-	// Search for and make a gameplay effect container spec to be applied later, from the EffectContainerMap
-	//UFUNCTION(BlueprintCallable, Category = Ability, meta = (AutoCreateRefTerm = "EventData"))
-	//	virtual FGSGameplayEffectContainerSpec MakeEffectContainerSpec(FGameplayTag ContainerTag, const FGameplayEventData& EventData, int32 OverrideGameplayLevel = -1);
+	 //Search for and make a gameplay effect container spec to be applied later, from the EffectContainerMap
+	UFUNCTION(BlueprintCallable, Category = Ability, meta = (AutoCreateRefTerm = "EventData"))
+		virtual FActionGameplayEffectContainerSpec MakeEffectContainerSpec(FGameplayTag ContainerTag, const FGameplayEventData& EventData, int32 OverrideGameplayLevel = -1);
 
-	// Applies a gameplay effect container spec that was previously created
-	//UFUNCTION(BlueprintCallable, Category = "Ability")
-	//	virtual TArray<FActiveGameplayEffectHandle> ApplyEffectContainerSpec(const FGSGameplayEffectContainerSpec& ContainerSpec);
+	 //Applies a gameplay effect container spec that was previously created
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+		virtual TArray<FActiveGameplayEffectHandle> ApplyEffectContainerSpec(const FActionGameplayEffectContainerSpec& ContainerSpec);
 
 	// Expose GetSourceObject to Blueprint. Retrieves the SourceObject associated with this ability. Callable on non instanced abilities.
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Ability", meta = (DisplayName = "Get Source Object"))

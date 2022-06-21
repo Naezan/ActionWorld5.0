@@ -19,6 +19,7 @@ class UPaperSprite;
 class UActionAbilitySystemComponent;
 class UActionGameplayAbility;
 class USkeletalMeshComponent;
+class AGATA_LineTrace;
 
 UCLASS(Blueprintable, BlueprintType)
 class ACTIONWORLDRPG_API AWeaponBase : public AActor, public IAbilitySystemInterface
@@ -155,6 +156,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 		FText GetDefaultStatusText() const;
 
+	// Getter for LineTraceTargetActor. Spawns it if it doesn't exist yet.
+	UFUNCTION(BlueprintCallable, Category = "Targeting")
+		AGATA_LineTrace* GetLineTraceTargetActor();
+
+	// Getter for SphereTraceTargetActor. Spawns it if it doesn't exist yet.
+	//UFUNCTION(BlueprintCallable, Category = "GASShooter|Targeting")
+	//	AGATA_SphereTrace* GetSphereTraceTargetActor();
+
 protected:
 	UPROPERTY()
 		UActionAbilitySystemComponent* AbilitySystemComponent;
@@ -178,6 +187,9 @@ protected:
 
 	//UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "UI")
 	//	TSubclassOf<class UGSHUDReticle> PrimaryHUDReticleClass;
+
+	UPROPERTY()
+		AGATA_LineTrace* LineTraceTargetActor;
 
 	// Collision capsule for when weapon is in pickup mode
 	UPROPERTY(VisibleAnywhere)

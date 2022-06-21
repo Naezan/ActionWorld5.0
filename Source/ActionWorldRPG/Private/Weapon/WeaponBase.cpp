@@ -12,6 +12,7 @@
 //어빌리티
 #include "AbilitySystem/ActionAbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/ActionGameplayAbility.h"
+#include "AbilitySystem/GATA_LineTrace.h"
 
 //네트워크
 #include "Net/UnrealNetwork.h"
@@ -344,13 +345,25 @@ FText AWeaponBase::GetDefaultStatusText() const
 	return DefaultStatusText;
 }
 
+AGATA_LineTrace* AWeaponBase::GetLineTraceTargetActor()
+{
+	if (LineTraceTargetActor)
+	{
+		return LineTraceTargetActor;
+	}
+
+	LineTraceTargetActor = GetWorld()->SpawnActor<AGATA_LineTrace>();
+	LineTraceTargetActor->SetOwner(this);
+	return LineTraceTargetActor;
+}
+
 void AWeaponBase::EndPlay(EEndPlayReason::Type EndPlayReason)
 {
-	/*if (LineTraceTargetActor)
+	if (LineTraceTargetActor)
 	{
 		LineTraceTargetActor->Destroy();
 	}
-
+	/*
 	if (SphereTraceTargetActor)
 	{
 		SphereTraceTargetActor->Destroy();
