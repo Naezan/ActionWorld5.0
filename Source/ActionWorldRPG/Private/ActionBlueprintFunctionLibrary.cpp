@@ -76,6 +76,45 @@ bool UActionBlueprintFunctionLibrary::IsAbilitySpecHandleValid(FGameplayAbilityS
 	return Handle.IsValid();
 }
 
+bool UActionBlueprintFunctionLibrary::DoesEffectContainerSpecHaveEffects(const FActionGameplayEffectContainerSpec& ContainerSpec)
+{
+	return ContainerSpec.HasValidEffects();
+}
+
+bool UActionBlueprintFunctionLibrary::DoesEffectContainerSpecHaveTargets(const FActionGameplayEffectContainerSpec& ContainerSpec)
+{
+	return ContainerSpec.HasValidTargets();
+}
+
+void UActionBlueprintFunctionLibrary::ClearEffectContainerSpecTargets(UPARAM(ref)FActionGameplayEffectContainerSpec& ContainerSpec)
+{
+	ContainerSpec.ClearTargets();
+}
+
+void UActionBlueprintFunctionLibrary::AddTargetsToEffectContainerSpec(UPARAM(ref)FActionGameplayEffectContainerSpec& ContainerSpec, const TArray<FGameplayAbilityTargetDataHandle>& TargetData, const TArray<FHitResult>& HitResults, const TArray<AActor*>& TargetActors)
+{
+	ContainerSpec.AddTargets(TargetData, HitResults, TargetActors);
+}
+
+TArray<FActiveGameplayEffectHandle> UActionBlueprintFunctionLibrary::ApplyExternalEffectContainerSpec(const FActionGameplayEffectContainerSpec& ContainerSpec)
+{
+	TArray<FActiveGameplayEffectHandle> AllEffects;
+
+	// Iterate list of gameplay effects
+	for (const FGameplayEffectSpecHandle& SpecHandle : ContainerSpec.TargetGameplayEffectSpecs)
+	{
+		if (SpecHandle.IsValid())
+		{
+			// If effect is valid, iterate list of targets and apply to all
+			for (TSharedPtr<FGameplayAbilityTargetData> Data : ContainerSpec.TargetData.Data)
+			{
+				AllEffects.Append(Data->ApplyGameplayEffectSpec(*SpecHandle.Data.Get()));
+			}
+		}
+	}
+	return AllEffects;
+}
+
 void UActionBlueprintFunctionLibrary::ClearTargetData(UPARAM(ref)FGameplayAbilityTargetDataHandle& TargetData)
 {
 	TargetData.Clear();

@@ -146,6 +146,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")
 		UAnimMontage* DeathMontage;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Audio")
+		class USoundCue* DeathSound;
+
 	// Default abilities for this Character. These will be removed on Character death and regiven if Character respawns.
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
 		TArray<TSubclassOf<UActionGameplayAbility>> CharacterAbilities;

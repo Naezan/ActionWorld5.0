@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/AbilityTasks/AT_WaitTargetDataUsingActor.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/GATA_Trace.h"
 
 UAT_WaitTargetDataUsingActor::UAT_WaitTargetDataUsingActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -239,18 +240,24 @@ void UAT_WaitTargetDataUsingActor::OnDestroy(bool AbilityEnded)
 {
 	if (TargetActor)
 	{
-		// 라인 트레이스 종료?
-		
-		// TargetActor doesn't have a StopTargeting function
-		TargetActor->SetActorTickEnabled(false);
+		AGATA_Trace* TraceTargetActor = Cast<AGATA_Trace>(TargetActor);
+		if (TraceTargetActor)
+		{
+			TraceTargetActor->StopTargeting();
+		}
+		else
+		{
+			// TargetActor doesn't have a StopTargeting function
+			TargetActor->SetActorTickEnabled(false);
 
-		// Clear added callbacks
-		TargetActor->TargetDataReadyDelegate.RemoveAll(this);
-		TargetActor->CanceledDelegate.RemoveAll(this);
+			// Clear added callbacks
+			TargetActor->TargetDataReadyDelegate.RemoveAll(this);
+			TargetActor->CanceledDelegate.RemoveAll(this);
 
-		AbilitySystemComponent->GenericLocalConfirmCallbacks.RemoveDynamic(TargetActor, &AGameplayAbilityTargetActor::ConfirmTargeting);
-		AbilitySystemComponent->GenericLocalCancelCallbacks.RemoveDynamic(TargetActor, &AGameplayAbilityTargetActor::CancelTargeting);
-		TargetActor->GenericDelegateBoundASC = nullptr;
+			AbilitySystemComponent->GenericLocalConfirmCallbacks.RemoveDynamic(TargetActor, &AGameplayAbilityTargetActor::ConfirmTargeting);
+			AbilitySystemComponent->GenericLocalCancelCallbacks.RemoveDynamic(TargetActor, &AGameplayAbilityTargetActor::CancelTargeting);
+			TargetActor->GenericDelegateBoundASC = nullptr;
+		}
 	}
 
 	Super::OnDestroy(AbilityEnded);

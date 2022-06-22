@@ -2,6 +2,7 @@
 
 
 #include "Character/Player/ActionPlayerController.h"
+#include "Character/Player/PlayerBase.h"
 
 void AActionPlayerController::SetEquippedWeaponPrimaryIconFromSprite(UPaperSprite* InSprite)
 {
@@ -29,9 +30,68 @@ void AActionPlayerController::SetSecondaryReserveAmmo(int32 SecondaryReserveAmmo
 
 void AActionPlayerController::ShowDamageNumber_Implementation(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags)
 {
+	if (IsValid(TargetCharacter))
+	{
+		TargetCharacter->AddDamageNumber(DamageAmount, DamageNumberTags);
+	}
 }
 
 bool AActionPlayerController::ShowDamageNumber_Validate(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags)
 {
-    return false;
+	return true;
+}
+
+void AActionPlayerController::SetRespawnCountdown_Implementation(float RespawnTimeRemaining)
+{
+}
+
+bool AActionPlayerController::SetRespawnCountdown_Validate(float RespawnTimeRemaining)
+{
+	return true;
+}
+
+void AActionPlayerController::ClientSetControlRotation_Implementation(FRotator NewRotation)
+{
+	SetControlRotation(NewRotation);
+}
+
+bool AActionPlayerController::ClientSetControlRotation_Validate(FRotator NewRotation)
+{
+	return true;
+}
+
+void AActionPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	//AGSPlayerState* PS = GetPlayerState<AGSPlayerState>();
+	//if (PS)
+	//{
+	//    // Init ASC with PS (Owner) and our new Pawn (AvatarActor)
+	//    PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, InPawn);
+	//}
+}
+
+void AActionPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+}
+
+void AActionPlayerController::Kill()
+{
+	ServerKill();
+}
+
+void AActionPlayerController::ServerKill_Implementation()
+{
+	APlayerBase* PC = GetOwner<APlayerBase>();
+	if (PC)
+	{
+		PC->GetPlayerAttributeSet()->SetHealth(0.f);
+	}
+}
+
+bool AActionPlayerController::ServerKill_Validate()
+{
+	return true;
 }

@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Character/ActionCharacterBase.h"
+
+//입력
+#include "ActionWorldRPG/ActionWorldRPG.h"
+
 #include "PlayerBase.generated.h"
 
 //카메라
@@ -11,6 +15,7 @@ class UCameraComponent;
 class USpringArmComponent;
 
 class AWeaponBase;
+class UInputAction;
 
 //어빌리티
 UENUM(BlueprintType)
@@ -134,6 +139,55 @@ protected:
 
 	virtual void PostInitializeComponents() override;
 
+	// =========== Enhanced Input ===========
+	void HandleWeaponPrimaryActionPressed();
+	void HandleWeaponPrimaryActionReleased();
+	void HandleWeaponSecondaryActionPressed();
+	void HandleWeaponSecondaryActionReleased();
+	void HandleWeaponAlternateActionPressed();
+	void HandleWeaponAlternateActionReleased();
+	void HandleReloadActionPressed();
+	void HandleReloadActionReleased();
+	void HandleNextWeaponActionPressed();
+	void HandleNextWeaponActionReleased();
+	void HandlePreviousWeaponActionPressed();
+	void HandlePreviousWeaponActionReleased();
+
+	void CallGenericConfirm();
+	void CallGenericCancel();
+
+	void SendLocalInputToASC(bool bIsPressed, const EActionAbilityInputID AbilityInputID);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+	TObjectPtr<UInputAction> GenericConfirmAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> GenericCancelAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> EquipPrimaryAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> EquipSecondaryAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> WeaponPrimaryAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> WeaponSecondaryAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> WeaponAlternateAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> ReloadAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> NextWeaponAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> PreviousWeaponAction;
+
 	// Toggles between perspectives
 	void TogglePerspective();
 
@@ -179,7 +233,7 @@ protected:
 		AWeaponBase* CurrentWeapon;
 
 	//UPROPERTY()
-	//class UGSAmmoAttributeSet* AmmoAttributeSet;
+	//class UAmmoAttributeSet* AmmoAttributeSet;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Character")
 		TSubclassOf<UGameplayEffect> DeathEffect;

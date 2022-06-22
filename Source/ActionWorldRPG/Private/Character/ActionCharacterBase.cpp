@@ -16,6 +16,9 @@
 #include "AbilitySystem/Attributes/PlayerAttributeSet.h"
 #include "AbilitySystem/Attributes/AmmoAttributeSet.h"
 
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+
 // Sets default values
 AActionCharacterBase::AActionCharacterBase()
 {
@@ -89,6 +92,12 @@ void AActionCharacterBase::Die()
 		AbilitySystemComponent->AddLooseGameplayTag(DeadTag);
 	}
 
+	//TODO replace with a locally executed GameplayCue
+	if (DeathSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+	}
+
 	if (DeathMontage)
 	{
 		PlayAnimMontage(DeathMontage);
@@ -145,12 +154,8 @@ void AActionCharacterBase::RemoveCharacterAbilities()
 
 int32 AActionCharacterBase::GetCharacterLevel() const
 {
-	if (IsValid(PlayerAttributeSet))
-	{
-		return static_cast<int32>(PlayerAttributeSet->GetCharacterLevel());
-	}
-
-	return 0;
+	//TODO
+	return 1;
 }
 
 float AActionCharacterBase::GetHealth() const
@@ -260,7 +265,9 @@ void AActionCharacterBase::AddCharacterAbilities()
 	for (TSubclassOf<UActionGameplayAbility>& StartupAbility : CharacterAbilities)
 	{
 		AbilitySystemComponent->GiveAbility(
-			FGameplayAbilitySpec(StartupAbility, 1, INDEX_NONE, this));
+			FGameplayAbilitySpec(StartupAbility, 
+			GetAbilityLevel(StartupAbility.GetDefaultObject()->AbilityID), 
+			static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this));
 	}
 
 	AbilitySystemComponent->CharacterAbilitiesGiven = true;

@@ -213,7 +213,8 @@ void AWeaponBase::AddAbilities()
 	for (TSubclassOf<UActionGameplayAbility>& Ability : Abilities)
 	{
 		AbilitySpecHandles.Add(ASC->GiveAbility(
-			FGameplayAbilitySpec(Ability, 1, INDEX_NONE, this)));
+			FGameplayAbilitySpec(Ability, GetAbilityLevel(Ability.GetDefaultObject()->AbilityID),
+				static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), this)));
 	}
 }
 

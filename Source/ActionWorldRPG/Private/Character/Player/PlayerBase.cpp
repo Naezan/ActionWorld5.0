@@ -22,11 +22,16 @@
 #include "ActionWorldRPG/ActionWorldRPGGameModeBase.h"
 #include "Character/Player/ActionPlayerController.h"
 
+//사운드
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 
 //무기
 #include "Weapon/WeaponBase.h"
+
+//입력
+#include "InputAction.h"
+#include "EnhancedInputComponent.h"
 
 APlayerBase::APlayerBase()
 {
@@ -99,6 +104,39 @@ void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	//InputBind
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		if (WeaponPrimaryAction)
+		{
+			EnhancedInputComponent->BindAction(WeaponPrimaryAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleWeaponPrimaryActionPressed);
+			EnhancedInputComponent->BindAction(WeaponPrimaryAction, ETriggerEvent::Completed, this, &APlayerBase::HandleWeaponPrimaryActionReleased);
+		}
+		if (WeaponSecondaryAction)
+		{
+			EnhancedInputComponent->BindAction(WeaponSecondaryAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleWeaponSecondaryActionPressed);
+			EnhancedInputComponent->BindAction(WeaponSecondaryAction, ETriggerEvent::Completed, this, &APlayerBase::HandleWeaponSecondaryActionReleased);
+		}
+		if (WeaponAlternateAction)
+		{
+			EnhancedInputComponent->BindAction(WeaponAlternateAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleWeaponAlternateActionPressed);
+			EnhancedInputComponent->BindAction(WeaponAlternateAction, ETriggerEvent::Completed, this, &APlayerBase::HandleWeaponAlternateActionReleased);
+		}
+		if (ReloadAction)
+		{
+			EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleReloadActionPressed);
+			EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Completed, this, &APlayerBase::HandleReloadActionReleased);
+		}
+		if (NextWeaponAction)
+		{
+			EnhancedInputComponent->BindAction(NextWeaponAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleNextWeaponActionPressed);
+			EnhancedInputComponent->BindAction(NextWeaponAction, ETriggerEvent::Completed, this, &APlayerBase::HandleNextWeaponActionReleased);
+		}
+		if (PreviousWeaponAction)
+		{
+			EnhancedInputComponent->BindAction(PreviousWeaponAction, ETriggerEvent::Triggered, this, &APlayerBase::HandlePreviousWeaponActionPressed);
+			EnhancedInputComponent->BindAction(PreviousWeaponAction, ETriggerEvent::Completed, this, &APlayerBase::HandlePreviousWeaponActionReleased);
+		}
+	}
 }
 
 void APlayerBase::PossessedBy(AController* NewController)
@@ -503,6 +541,95 @@ void APlayerBase::PostInitializeComponents()
 	GetWorldTimerManager().SetTimerForNextTick(this, &APlayerBase::SpawnDefaultInventory);
 }
 
+void APlayerBase::HandleWeaponPrimaryActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::PrimaryFire);
+}
+
+void APlayerBase::HandleWeaponPrimaryActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::PrimaryFire);
+}
+
+void APlayerBase::HandleWeaponSecondaryActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::SecondaryFire);
+}
+
+void APlayerBase::HandleWeaponSecondaryActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::SecondaryFire);
+}
+
+void APlayerBase::HandleWeaponAlternateActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::AlternateFire);
+}
+
+void APlayerBase::HandleWeaponAlternateActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::AlternateFire);
+}
+
+void APlayerBase::HandleReloadActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::Reload);
+}
+
+void APlayerBase::HandleReloadActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::Reload);
+}
+
+void APlayerBase::HandleNextWeaponActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::NextWeapon);
+}
+
+void APlayerBase::HandleNextWeaponActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::NextWeapon);
+}
+
+void APlayerBase::HandlePreviousWeaponActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::PrevWeapon);
+}
+
+void APlayerBase::HandlePreviousWeaponActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::PrevWeapon);
+}
+
+void APlayerBase::CallGenericConfirm()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::Confirm);
+}
+
+void APlayerBase::CallGenericCancel()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::Cancel);
+}
+
+void APlayerBase::SendLocalInputToASC(bool bIsPressed, const EActionAbilityInputID AbilityInputID)
+{
+	if (!IsValid(AbilitySystemComponent))
+	{
+		return;
+	}
+
+	if (bIsPressed)
+	{
+		//UKismetSystemLibrary::PrintString(this, "Pressing Input");
+		AbilitySystemComponent->AbilityLocalInputPressed(static_cast<int32>(AbilityInputID));
+	}
+	else
+	{
+		//UKismetSystemLibrary::PrintString(this, "Releasing Input");
+		AbilitySystemComponent->AbilityLocalInputReleased(static_cast<int32>(AbilityInputID));
+	}
+}
+
 void APlayerBase::TogglePerspective()
 {
 	// If knocked down, always be in 3rd person
@@ -534,7 +661,7 @@ void APlayerBase::SetPerspective(bool Is1PPerspective)
 void APlayerBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	
+
 	// Init ASC Actor Info for clients. Server will init its ASC when it possesses a new Actor.
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
