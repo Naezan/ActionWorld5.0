@@ -33,8 +33,13 @@
 #include "InputAction.h"
 #include "EnhancedInputComponent.h"
 
+//UI
+#include "HUD/PlayerHUD.h"
+
 APlayerBase::APlayerBase()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	bASCInputBound = false;
 	bChangedWeaponLocally = false;
 	bIsFirstPersonPerspective = false;
@@ -157,8 +162,8 @@ void APlayerBase::PossessedBy(AController* NewController)
 
 	AddCharacterAbilities();
 
-	AActionPlayerController* PC = Cast<AActionPlayerController>(GetController());
-	if (PC)
+	PlayerController = Cast<AActionPlayerController>(GetController());
+	if (PlayerController)
 	{
 		//PC->CreateHUD();
 	}
@@ -541,6 +546,13 @@ void APlayerBase::PostInitializeComponents()
 	GetWorldTimerManager().SetTimerForNextTick(this, &APlayerBase::SpawnDefaultInventory);
 }
 
+void APlayerBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	SetHUDCrosshairs(DeltaTime);
+}
+
 void APlayerBase::HandleWeaponPrimaryActionPressed()
 {
 	SendLocalInputToASC(true, EActionAbilityInputID::PrimaryFire);
@@ -554,11 +566,13 @@ void APlayerBase::HandleWeaponPrimaryActionReleased()
 void APlayerBase::HandleWeaponSecondaryActionPressed()
 {
 	SendLocalInputToASC(true, EActionAbilityInputID::SecondaryFire);
+	bIsAiming = true;
 }
 
 void APlayerBase::HandleWeaponSecondaryActionReleased()
 {
 	SendLocalInputToASC(false, EActionAbilityInputID::SecondaryFire);
+	bIsAiming = false;
 }
 
 void APlayerBase::HandleWeaponAlternateActionPressed()
@@ -976,4 +990,62 @@ void APlayerBase::ClientSyncCurrentWeapon_Implementation(AWeaponBase* InWeapon)
 bool APlayerBase::ClientSyncCurrentWeapon_Validate(AWeaponBase* InWeapon)
 {
 	return true;
+}
+
+void APlayerBase::SetHUDCrosshairs(float DeltaTime)
+{
+	if (PlayerController == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red,
+			TEXT("PlayerBase Cant Find Controller"));
+		return;
+	}
+
+	//만약에 HUD가 존재하면 그냥 뱉고 아니면 캐스팅
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(PlayerController->GetHUD()) : PlayerHUD;
+
+	if (PlayerHUD)
+	{
+		FHUDPackage HUDPackage;
+		if (CurrentWeapon)
+		{
+			HUDPackage.CrosshairsCenter = CurrentWeapon->CrosshairsCenter;
+			HUDPackage.CrosshairsLeft = CurrentWeapon->CrosshairsLeft;
+			HUDPackage.CrosshairsRight = CurrentWeapon->CrosshairsRight;
+			HUDPackage.CrosshairsTop = CurrentWeapon->CrosshairsTop;
+			HUDPackage.CrosshairsBottom = CurrentWeapon->CrosshairsBottom;
+		}
+		else
+		{
+			HUDPackage.CrosshairsCenter = nullptr;
+			HUDPackage.CrosshairsLeft = nullptr;
+			HUDPackage.CrosshairsRight = nullptr;
+			HUDPackage.CrosshairsTop = nullptr;
+			HUDPackage.CrosshairsBottom = nullptr;
+		}
+		//Calculate Crosshair Spread
+		//Player MaxSpeed = 500.f
+		FVector2D WalkSpeedRange(0.f, 500.f);
+		FVector2D VelocityMultiplierRange(0.f, 1.f);
+		FVector Velocity = GetVelocity();
+		Velocity.Z = 0.f;
+		CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(
+		WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
+
+		if (GetCharacterMovement()->IsFalling())
+		{
+			CrosshairInAirFactor = FMath::FInterpTo(
+			CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
+		}
+		else
+		{
+			CrosshairInAirFactor = FMath::FInterpTo(
+				CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
+		}
+
+		HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+
+		PlayerHUD->SetHUDPackage(HUDPackage);
+	}
+
 }

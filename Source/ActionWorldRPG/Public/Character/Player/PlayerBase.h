@@ -57,7 +57,6 @@ public:
 	APlayerBase();
 
 	//어빌리티 관련프로퍼티
-
 	FGameplayTag CurrentWeaponTag;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -72,12 +71,15 @@ public:
 
 	virtual void FinishDying() override;
 
+	//3인칭 프로퍼티
 	UFUNCTION(BlueprintCallable, Category = "Character")
 		virtual bool IsInFirstPersonPerspective() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
 		USkeletalMeshComponent* GetThirdPersonMesh() const;
 
+
+	//=========== Weapon ============
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 		AWeaponBase* GetCurrentWeapon() const;
 
@@ -139,6 +141,8 @@ protected:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual void Tick(float DeltaTime) override;
+
 	// =========== Enhanced Input ===========
 	void HandleWeaponPrimaryActionPressed();
 	void HandleWeaponPrimaryActionReleased();
@@ -159,7 +163,7 @@ protected:
 	void SendLocalInputToASC(bool bIsPressed, const EActionAbilityInputID AbilityInputID);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
-	TObjectPtr<UInputAction> GenericConfirmAction;
+		TObjectPtr<UInputAction> GenericConfirmAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
 		TObjectPtr<UInputAction> GenericCancelAction;
@@ -188,6 +192,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
 		TObjectPtr<UInputAction> PreviousWeaponAction;
 
+	//=============================
+
+
+
 	// Toggles between perspectives
 	void TogglePerspective();
 
@@ -206,6 +214,9 @@ protected:
 
 	bool bASCInputBound;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Character")
+		bool bIsAiming = false;
+
 	// Set to true when we change the weapon predictively and flip it to false when the Server replicates to confirm.
 	// We use this if the Server refused a weapon change ability's activation to ask the Server to sync the client back up
 	// with the correct CurrentWeapon.
@@ -216,6 +227,13 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character")
 		FName WeaponAttachPoint;
+
+	//컨트롤러
+	class AActionPlayerController* PlayerController;
+	class APlayerHUD* PlayerHUD;
+
+	float CrosshairVelocityFactor;
+	float CrosshairInAirFactor;
 
 	//카메라
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Camera")
@@ -303,4 +321,9 @@ protected:
 		void ClientSyncCurrentWeapon(AWeaponBase* InWeapon);
 	void ClientSyncCurrentWeapon_Implementation(AWeaponBase* InWeapon);
 	bool ClientSyncCurrentWeapon_Validate(AWeaponBase* InWeapon);
+
+	/*
+	* HUD
+	*/
+	void SetHUDCrosshairs(float DeltaTime);
 };

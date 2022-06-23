@@ -253,4 +253,23 @@ protected:
 
 	UFUNCTION()
 		virtual void OnRep_MaxSecondaryClipAmmo(int32 OldMaxSecondaryClipAmmo);
+
+public:
+	/*
+	* Textures for the weapon cosshairs
+	*/
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+		TObjectPtr<class UTexture2D> CrosshairsCenter;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+		TObjectPtr<class UTexture2D> CrosshairsLeft;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+		TObjectPtr<class UTexture2D> CrosshairsRight;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+		TObjectPtr<class UTexture2D> CrosshairsTop;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+		TObjectPtr<class UTexture2D> CrosshairsBottom;
 };

@@ -157,7 +157,7 @@ void AWeaponBase::Equip()
 	{
 		WeaponMesh3P->AttachToComponent(OwningCharacter->GetThirdPersonMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, AttachPoint);
 		WeaponMesh3P->SetRelativeLocation(WeaponMesh3PEquippedRelativeLocation);
-		WeaponMesh3P->SetRelativeRotation(FRotator(0, 0, -90.0f));
+		WeaponMesh3P->SetRelativeRotation(FRotator(0, 0, 0));
 		WeaponMesh3P->CastShadow = true;
 		WeaponMesh3P->bCastHiddenShadow = true;
 
