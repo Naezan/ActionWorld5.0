@@ -34,13 +34,11 @@
 #include "EnhancedInputComponent.h"
 
 //UI
-#include "HUD/PlayerHUD.h"
 
 APlayerBase::APlayerBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	bASCInputBound = false;
 	bChangedWeaponLocally = false;
 	bIsFirstPersonPerspective = false;
 	Default3PFOV = 80.0f;
@@ -550,12 +548,23 @@ void APlayerBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	SetHUDCrosshairs(DeltaTime);
+	if (IsLocallyControlled())
+	{
+		SetHUDCrosshairs(DeltaTime);
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		HitTarget = HitResult.ImpactPoint;
+	}
 }
 
 void APlayerBase::HandleWeaponPrimaryActionPressed()
 {
 	SendLocalInputToASC(true, EActionAbilityInputID::PrimaryFire);
+
+	if (CurrentWeapon)
+	{
+		CrosshairShootingFactor = .5f;
+	}
 }
 
 void APlayerBase::HandleWeaponPrimaryActionReleased()
@@ -1006,7 +1015,6 @@ void APlayerBase::SetHUDCrosshairs(float DeltaTime)
 
 	if (PlayerHUD)
 	{
-		FHUDPackage HUDPackage;
 		if (CurrentWeapon)
 		{
 			HUDPackage.CrosshairsCenter = CurrentWeapon->CrosshairsCenter;
@@ -1030,12 +1038,12 @@ void APlayerBase::SetHUDCrosshairs(float DeltaTime)
 		FVector Velocity = GetVelocity();
 		Velocity.Z = 0.f;
 		CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(
-		WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
+			WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
 
 		if (GetCharacterMovement()->IsFalling())
 		{
 			CrosshairInAirFactor = FMath::FInterpTo(
-			CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
+				CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
 		}
 		else
 		{
@@ -1043,9 +1051,106 @@ void APlayerBase::SetHUDCrosshairs(float DeltaTime)
 				CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 		}
 
-		HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+		if (bIsAiming)
+		{
+			CrosshairAimFactor = FMath::FInterpTo(
+				CrosshairAimFactor, .58f, DeltaTime, 30.f);
+		}
+		else
+		{
+			CrosshairAimFactor = FMath::FInterpTo(
+				CrosshairAimFactor, 0.f, DeltaTime, 30.f);
+		}
+
+		CrosshairShootingFactor = FMath::FInterpTo(
+			CrosshairShootingFactor, 0.f, DeltaTime, 40.f);
+
+		HUDPackage.CrosshairSpread =
+			0.5f +
+			CrosshairVelocityFactor +
+			CrosshairInAirFactor -
+			CrosshairAimFactor +
+			CrosshairShootingFactor;
 
 		PlayerHUD->SetHUDPackage(HUDPackage);
 	}
 
+}
+
+FVector APlayerBase::GetHitTarget() const
+{
+	return HitTarget;
+}
+
+void APlayerBase::TraceUnderCrosshairs(FHitResult& TraceHitResult)
+{
+	FVector2D ViewportSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+	FVector CrosshairWorldPosition;
+	FVector CrosshairWorldDirection;
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrosshairWorldDirection
+	);
+
+	if (bScreenToWorld)
+	{
+		FVector Start = CrosshairWorldPosition;
+
+		float DistanceToCharacter = (GetActorLocation() - Start).Size();
+		Start += CrosshairWorldDirection * (DistanceToCharacter + 100.f);
+		DrawDebugSphere(GetWorld(), Start, 16.f, 12, FColor::Red, false);
+
+		FVector End = Start + CrosshairWorldDirection * 80000.f;
+
+		GetWorld()->LineTraceSingleByChannel(
+			TraceHitResult,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility
+		);
+
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractCrosshairInterface>())
+		{
+			HUDPackage.CrosshairColor = FLinearColor::Red;
+		}
+		else
+		{
+			HUDPackage.CrosshairColor = FLinearColor::White;
+		}
+	}
+}
+
+void APlayerBase::InterpFOV(float DeltaTime)
+{
+	if (CurrentWeapon == nullptr) return;
+
+	float CurrentFOV = CameraComp->FieldOfView;
+	if (bIsAiming)
+	{
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, CurrentWeapon->ZoomFOV,
+			DeltaTime, CurrentWeapon->ZoomDuration);
+	}
+	else
+	{
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, Default3PFOV,
+			DeltaTime, CurrentWeapon->ZoomDuration / 2.f);
+	}
+
+	if (CameraComp)
+	{
+		CameraComp->SetFieldOfView(CurrentFOV);
+	}
+}
+
+void APlayerBase::SetHitTarget(FVector hitTarget)
+{
+	HitTarget = hitTarget;
 }

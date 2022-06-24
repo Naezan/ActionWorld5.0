@@ -272,4 +272,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 		TObjectPtr<class UTexture2D> CrosshairsBottom;
+
+	/*
+	* Aiming ZoomFOV
+	*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Camera")
+		float ZoomFOV = 30.f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Camera")
+		float ZoomDuration = 0.1f;
 };

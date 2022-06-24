@@ -8,6 +8,12 @@
 //입력
 #include "ActionWorldRPG/ActionWorldRPG.h"
 
+//UI
+#include "HUD/PlayerHUD.h"
+
+//인터페이스
+#include "Interfaces/InteractCrosshairInterface.h"
+
 #include "PlayerBase.generated.h"
 
 //카메라
@@ -49,7 +55,7 @@ struct ACTIONWORLDRPG_API FPlayerInventory
 };
 
 UCLASS()
-class ACTIONWORLDRPG_API APlayerBase : public AActionCharacterBase
+class ACTIONWORLDRPG_API APlayerBase : public AActionCharacterBase, public IInteractCrosshairInterface
 {
 	GENERATED_BODY()
 
@@ -133,6 +139,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 		int32 GetNumWeapons() const;
 
+	//HUD
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+		FVector GetHitTarget() const;
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+		void SetHitTarget(FVector hitTarget);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -212,8 +224,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 		bool bIsFirstPersonPerspective;
 
-	bool bASCInputBound;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Character")
 		bool bIsAiming = false;
 
@@ -230,10 +240,16 @@ protected:
 
 	//컨트롤러
 	class AActionPlayerController* PlayerController;
-	class APlayerHUD* PlayerHUD;
 
-	float CrosshairVelocityFactor;
-	float CrosshairInAirFactor;
+	//HUD
+	class APlayerHUD* PlayerHUD;
+	FHUDPackage HUDPackage;
+	FVector HitTarget;
+
+	float CrosshairVelocityFactor; //뛰거나 걸을때
+	float CrosshairInAirFactor; //공중에 있을때
+	float CrosshairAimFactor; //에임동작일때
+	float CrosshairShootingFactor; //총을 쏠때
 
 	//카메라
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Camera")
@@ -326,4 +342,10 @@ protected:
 	* HUD
 	*/
 	void SetHUDCrosshairs(float DeltaTime);
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
+
+	/*
+	* ZoomFOV Aiming
+	*/
+	void InterpFOV(float DeltaTime);
 };
