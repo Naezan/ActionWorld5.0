@@ -576,12 +576,14 @@ void APlayerBase::HandleWeaponSecondaryActionPressed()
 {
 	SendLocalInputToASC(true, EActionAbilityInputID::SecondaryFire);
 	bIsAiming = true;
+	bUseControllerRotationYaw = true;
 }
 
 void APlayerBase::HandleWeaponSecondaryActionReleased()
 {
 	SendLocalInputToASC(false, EActionAbilityInputID::SecondaryFire);
 	bIsAiming = false;
+	bUseControllerRotationYaw = false;
 }
 
 void APlayerBase::HandleWeaponAlternateActionPressed()
