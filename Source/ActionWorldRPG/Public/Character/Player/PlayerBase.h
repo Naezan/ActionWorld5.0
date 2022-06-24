@@ -226,6 +226,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character")
 		bool bIsAiming = false;
+	UPROPERTY(BlueprintReadWrite, Category = "Character")
+		bool bIsReloading = false;
 
 	// Set to true when we change the weapon predictively and flip it to false when the Server replicates to confirm.
 	// We use this if the Server refused a weapon change ability's activation to ask the Server to sync the client back up
