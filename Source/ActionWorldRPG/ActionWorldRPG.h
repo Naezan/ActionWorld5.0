@@ -4,6 +4,13 @@
 
 #include "CoreMinimal.h"
 
+#define EPS_Grass	EPhysicalSurface::SurfaceType1
+#define EPS_Stone	EPhysicalSurface::SurfaceType2
+#define EPS_Metal	EPhysicalSurface::SurfaceType3
+#define EPS_Wood	EPhysicalSurface::SurfaceType4
+#define EPS_Sand	EPhysicalSurface::SurfaceType5
+#define EPS_Water	EPhysicalSurface::SurfaceType6
+
 UENUM(BlueprintType)
 enum class EActionAbilityInputID : uint8
 {

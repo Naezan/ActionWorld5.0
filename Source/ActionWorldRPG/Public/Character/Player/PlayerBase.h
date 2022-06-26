@@ -145,6 +145,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 		void SetHitTarget(FVector hitTarget);
 
+	//FootStep
+	UFUNCTION(BlueprintCallable, Category = "Footstep")
+		EPhysicalSurface GetSurfaceType();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

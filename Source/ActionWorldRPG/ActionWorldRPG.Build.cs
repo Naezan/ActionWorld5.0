@@ -12,7 +12,8 @@ public class ActionWorldRPG : ModuleRules
             "Core", "CoreUObject", "Engine", "InputCore",
             "GameplayAbilities", "GameplayTasks", "GameplayTags",
             "UMG", "Paper2D",
-            "EnhancedInput" });
+            "EnhancedInput",
+            "PhysicsCore" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
 
