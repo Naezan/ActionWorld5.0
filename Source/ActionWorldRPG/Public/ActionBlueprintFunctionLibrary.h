@@ -11,7 +11,7 @@
 #include "ActionBlueprintFunctionLibrary.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ACTIONWORLDRPG_API UActionBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
@@ -87,4 +87,8 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Ability|TargetData")
 		static void ClearTargetData(UPARAM(ref) FGameplayAbilityTargetDataHandle& TargetData);
+
+	//Find Near Actors
+	UFUNCTION(BlueprintCallable, Category = "AI", meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "ActorClass", DynamicOutputParam = "OutActors"))
+		static void GetAllActorsOfClassByRadius(const UObject* WorldContextObject, TSubclassOf<AActor> ActorClass, AActor* Actor, float Radius, TArray<AActor*>& OutActors);
 };

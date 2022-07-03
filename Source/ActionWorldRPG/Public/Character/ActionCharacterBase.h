@@ -9,6 +9,10 @@
 //어빌리티
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/Attributes/PlayerAttributeSet.h"
+
+//팀
+#include "GenericTeamAgentInterface.h"
+
 #include "ActionCharacterBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCharacterDiedDelegate, AActionCharacterBase*, Character);
@@ -38,16 +42,13 @@ struct ACTIONWORLDRPG_API FActionDamageNumber
 };
 
 UCLASS()
-class ACTIONWORLDRPG_API AActionCharacterBase : public ACharacter, public IAbilitySystemInterface
+class ACTIONWORLDRPG_API AActionCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
 	AActionCharacterBase();
-
-	// Friended to allow access to handle functions above
-	friend UPlayerAttributeSet;
 
 	UPROPERTY(BlueprintAssignable, Category = "Character")
 		FCharacterDiedDelegate OnCharacterDied;
@@ -60,8 +61,6 @@ public:
 	// Implement IAbilitySystemInterface
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	class UPlayerAttributeSet* GetPlayerAttributeSet() const;
-
 	class UAmmoAttributeSet* GetAmmoAttributeSet() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Character")
@@ -69,12 +68,17 @@ public:
 
 	// Switch on AbilityID to return individual ability levels.
 	UFUNCTION(BlueprintCallable, Category = "Character")
-	virtual int32 GetAbilityLevel(EActionAbilityInputID AbilityID) const;
+		virtual int32 GetAbilityLevel(EActionAbilityInputID AbilityID) const;
 
 	// Removes all CharacterAbilities. Can only be called by the Server. Removing on the Server will remove from Client too.
 	virtual void RemoveCharacterAbilities();
 
+	UFUNCTION()
 	virtual void Die();
+
+	//BlueprintImplementableEvent함수는 가상일 수 없다
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "Die"))
+	void K2_Die();
 
 	UFUNCTION(BlueprintCallable, Category = "Character")
 		virtual void FinishDying();
@@ -88,39 +92,39 @@ public:
 	//===========================
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		int32 GetCharacterLevel() const;
+		virtual int32 GetCharacterLevel() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetHealth() const;
+		virtual float GetHealth() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetMaxHealth() const;
+		virtual float GetMaxHealth() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetMana() const;
+		virtual float GetMana() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetMaxMana() const;
+		virtual float GetMaxMana() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetStamina() const;
+		virtual float GetStamina() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetMaxStamina() const;
+		virtual float GetMaxStamina() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetShield() const;
+		virtual float GetShield() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetMaxShield() const;
+		virtual float GetMaxShield() const;
 
 	// Gets the Current value of MoveSpeed
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetMoveSpeed() const;
+		virtual float GetMoveSpeed() const;
 
 	// Gets the Base value of MoveSpeed
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-		float GetMoveSpeedBaseValue() const;
+		virtual float GetMoveSpeedBaseValue() const;
 
 protected:
 	FGameplayTag DeadTag;
@@ -132,12 +136,8 @@ protected:
 	/** The component used to handle ability system interactions */
 	UActionAbilitySystemComponent* AbilitySystemComponent;
 
-	/** List of attributes modified by the ability system */
 	UPROPERTY()
-	UPlayerAttributeSet* PlayerAttributeSet;
-
-	UPROPERTY()
-	UAmmoAttributeSet* AmmoAttributeSet;
+		UAmmoAttributeSet* AmmoAttributeSet;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character")
 		FText CharacterName;
@@ -181,4 +181,21 @@ protected:
 	virtual void SetMana(float Mana);
 	virtual void SetStamina(float Stamina);
 	virtual void SetShield(float Shield);
+
+	//TeamID
+public:
+	//~ILyraTeamAgentInterface interface
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
+	/** Returns the Team ID of the team the player belongs to. */
+	UFUNCTION(BlueprintCallable)
+		int32 GetTeamId() const
+	{
+		return (MyTeamID == FGenericTeamId::NoTeam) ? INDEX_NONE : (int32)MyTeamID;
+	}
+
+private:
+	UPROPERTY()
+		FGenericTeamId MyTeamID;
 };

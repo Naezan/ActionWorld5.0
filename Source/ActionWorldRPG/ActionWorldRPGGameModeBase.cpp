@@ -46,22 +46,22 @@ void AActionWorldRPGGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Get the enemy hero spawn point
-	TArray<AActor*> Actors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), Actors);
-	for (AActor* Actor : Actors)
-	{
-		if (Actor->GetName() == FString("EnemyHeroSpawn"))
-		{
-			EnemySpawnPoint = Actor;
-			break;
-		}
-	}
+	//// Get the enemy hero spawn point
+	//TArray<AActor*> Actors;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), Actors);
+	//for (AActor* Actor : Actors)
+	//{
+	//	if (Actor->GetName() == FString("EnemyHeroSpawn"))
+	//	{
+	//		EnemySpawnPoint = Actor;
+	//		break;
+	//	}
+	//}
 
-	if (!EnemySpawnPoint)
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s EnemySpawnPoint is null."), *FString(__FUNCTION__));
-	}
+	//if (!EnemySpawnPoint)
+	//{
+	//	UE_LOG(LogTemp, Error, TEXT("%s EnemySpawnPoint is null."), *FString(__FUNCTION__));
+	//}
 }
 
 void AActionWorldRPGGameModeBase::RespawnPlayer(AController* Controller)

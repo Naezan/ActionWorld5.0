@@ -61,6 +61,8 @@ APlayerBase::APlayerBase()
 	CameraComp->SetupAttachment(CameraSpringArmComp);
 	CameraComp->bUsePawnControlRotation = false;
 
+	PlayerAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
+
 	//Ä¸½¶ÄÄÆ÷³ÍÆ®
 	GetCapsuleComponent()->InitCapsuleSize(94.f, 42.f);
 	//AreaClass -> NavArea_Obstacle
@@ -225,6 +227,11 @@ void APlayerBase::FinishDying()
 	Super::FinishDying();
 }
 
+UPlayerAttributeSet* APlayerBase::GetPlayerAttributeSet() const
+{
+	return PlayerAttributeSet;
+}
+
 bool APlayerBase::IsInFirstPersonPerspective() const
 {
 	return bIsFirstPersonPerspective;
@@ -233,6 +240,108 @@ bool APlayerBase::IsInFirstPersonPerspective() const
 USkeletalMeshComponent* APlayerBase::GetThirdPersonMesh() const
 {
 	return GetMesh();
+}
+
+int32 APlayerBase::GetCharacterLevel() const
+{
+	//TODO
+	return 1;
+}
+
+float APlayerBase::GetHealth() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetHealth();
+	}
+
+	return 0.0f;
+}
+
+float APlayerBase::GetMaxHealth() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetMaxHealth();
+	}
+
+	return 0.0f;
+}
+
+float APlayerBase::GetMana() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetMana();
+	}
+	return 0.0f;
+}
+
+float APlayerBase::GetMaxMana() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetMaxMana();
+	}
+	return 0.0f;
+}
+
+float APlayerBase::GetStamina() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetStamina();
+	}
+
+	return 0.0f;
+}
+
+float APlayerBase::GetMaxStamina() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetMaxStamina();
+	}
+
+	return 0.0f;
+}
+
+float APlayerBase::GetShield() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetShield();
+	}
+	return 0.0f;
+}
+
+float APlayerBase::GetMaxShield() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetMaxShield();
+	}
+	return 0.0f;
+}
+
+float APlayerBase::GetMoveSpeed() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetMoveSpeed();
+	}
+
+	return 0.0f;
+}
+
+float APlayerBase::GetMoveSpeedBaseValue() const
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		return PlayerAttributeSet->GetMoveSpeedAttribute().GetGameplayAttributeData(PlayerAttributeSet)->GetBaseValue();
+	}
+
+	return 0.0f;
 }
 
 AWeaponBase* APlayerBase::GetCurrentWeapon() const
@@ -724,6 +833,8 @@ void APlayerBase::OnRep_PlayerState()
 
 	if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SetHealth"));
+
 		// Set Health/Mana/Stamina/Shield to their max. This is only for *Respawn*. It will be set (replicated) by the
 		// Server, but we call it here just to be a little more responsive.
 		SetHealth(GetMaxHealth());
@@ -1169,4 +1280,36 @@ EPhysicalSurface APlayerBase::GetSurfaceType()
 		QueryParams);
 
 	return UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
+}
+
+void APlayerBase::SetHealth(float Health)
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		PlayerAttributeSet->SetHealth(Health);
+	}
+}
+
+void APlayerBase::SetMana(float Mana)
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		PlayerAttributeSet->SetMana(Mana);
+	}
+}
+
+void APlayerBase::SetStamina(float Stamina)
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		PlayerAttributeSet->SetStamina(Stamina);
+	}
+}
+
+void APlayerBase::SetShield(float Shield)
+{
+	if (IsValid(PlayerAttributeSet))
+	{
+		PlayerAttributeSet->SetShield(Shield);
+	}
 }

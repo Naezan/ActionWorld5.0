@@ -3,6 +3,8 @@
 
 #include "ActionBlueprintFunctionLibrary.h"
 #include "..\Public\ActionBlueprintFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 FString UActionBlueprintFunctionLibrary::GetPlayerEditorWindowRole(UWorld* World)
 {
@@ -118,4 +120,24 @@ TArray<FActiveGameplayEffectHandle> UActionBlueprintFunctionLibrary::ApplyExtern
 void UActionBlueprintFunctionLibrary::ClearTargetData(UPARAM(ref)FGameplayAbilityTargetDataHandle& TargetData)
 {
 	TargetData.Clear();
+}
+
+void UActionBlueprintFunctionLibrary::GetAllActorsOfClassByRadius(const UObject* WorldContextObject, TSubclassOf<AActor> ActorClass, AActor* Actor, float Radius, TArray<AActor*>& OutActors)
+{
+	if (!ActorClass)
+		return;
+
+	TArray<AActor*> OutActorsOfClass;
+	UGameplayStatics::GetAllActorsOfClass(WorldContextObject, ActorClass, OutActorsOfClass);
+	OutActors.Reset();
+
+	for (AActor * OutActor : OutActorsOfClass)
+	{
+		float Dist = FMath::Abs(FVector::Distance(Actor->GetActorLocation(), OutActor->GetActorLocation()));
+
+		if (Dist <= Radius)
+		{
+			OutActors.Add(OutActor);
+		}
+	}
 }

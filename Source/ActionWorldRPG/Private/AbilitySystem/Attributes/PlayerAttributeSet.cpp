@@ -2,8 +2,6 @@
 
 
 #include "AbilitySystem/Attributes/PlayerAttributeSet.h"
-#include "GameplayEffect.h"
-#include "GameplayEffectExtension.h"
 
 //¼­¹ö
 #include "Net/UnrealNetwork.h"

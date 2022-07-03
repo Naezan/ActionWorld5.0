@@ -28,8 +28,6 @@ AActionCharacterBase::AActionCharacterBase()
 	AbilitySystemComponent = CreateDefaultSubobject<UActionAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 
-	PlayerAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
-
 	AmmoAttributeSet = CreateDefaultSubobject<UAmmoAttributeSet>(TEXT("AmmoAttributeSet"));
 
 	// Cache tags
@@ -49,12 +47,6 @@ UAbilitySystemComponent* AActionCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }
-
-UPlayerAttributeSet* AActionCharacterBase::GetPlayerAttributeSet() const
-{
-	return PlayerAttributeSet;
-}
-
 UAmmoAttributeSet* AActionCharacterBase::GetAmmoAttributeSet() const
 {
 	return AmmoAttributeSet;
@@ -110,7 +102,9 @@ void AActionCharacterBase::Die()
 
 void AActionCharacterBase::FinishDying()
 {
-	Destroy();
+	K2_Die();
+
+	SetLifeSpan(0.1f);
 }
 
 void AActionCharacterBase::AddDamageNumber(float Damage, FGameplayTagContainer DamageNumberTags)
@@ -121,6 +115,61 @@ void AActionCharacterBase::AddDamageNumber(float Damage, FGameplayTagContainer D
 	{
 		GetWorldTimerManager().SetTimer(DamageNumberTimer, this, &AActionCharacterBase::ShowDamageNumber, 0.1, true, 0.0f);
 	}
+}
+
+int32 AActionCharacterBase::GetCharacterLevel() const
+{
+	return int32();
+}
+
+float AActionCharacterBase::GetHealth() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetMaxHealth() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetMana() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetMaxMana() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetStamina() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetMaxStamina() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetShield() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetMaxShield() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetMoveSpeed() const
+{
+	return 0.0f;
+}
+
+float AActionCharacterBase::GetMoveSpeedBaseValue() const
+{
+	return 0.0f;
 }
 
 void AActionCharacterBase::RemoveCharacterAbilities()
@@ -149,109 +198,6 @@ void AActionCharacterBase::RemoveCharacterAbilities()
 
 	//어빌리티 상태를 안받은상태로 바꿈
 	AbilitySystemComponent->CharacterAbilitiesGiven = false;
-}
-
-
-int32 AActionCharacterBase::GetCharacterLevel() const
-{
-	//TODO
-	return 1;
-}
-
-float AActionCharacterBase::GetHealth() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetHealth();
-	}
-
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetMaxHealth() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxHealth();
-	}
-
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetMana() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMana();
-	}
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetMaxMana() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxMana();
-	}
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetStamina() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetStamina();
-	}
-
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetMaxStamina() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxStamina();
-	}
-
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetShield() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetShield();
-	}
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetMaxShield() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxShield();
-	}
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetMoveSpeed() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMoveSpeed();
-	}
-
-	return 0.0f;
-}
-
-float AActionCharacterBase::GetMoveSpeedBaseValue() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMoveSpeedAttribute().GetGameplayAttributeData(PlayerAttributeSet)->GetBaseValue();
-	}
-
-	return 0.0f;
 }
 
 void AActionCharacterBase::AddCharacterAbilities()
@@ -326,32 +272,33 @@ void AActionCharacterBase::ShowDamageNumber()
 
 void AActionCharacterBase::SetHealth(float Health)
 {
-	if (IsValid(PlayerAttributeSet))
-	{
-		PlayerAttributeSet->SetHealth(Health);
-	}
 }
 
 void AActionCharacterBase::SetMana(float Mana)
 {
-	if (IsValid(PlayerAttributeSet))
-	{
-		PlayerAttributeSet->SetMana(Mana);
-	}
 }
 
 void AActionCharacterBase::SetStamina(float Stamina)
 {
-	if (IsValid(PlayerAttributeSet))
-	{
-		PlayerAttributeSet->SetStamina(Stamina);
-	}
 }
 
 void AActionCharacterBase::SetShield(float Shield)
 {
-	if (IsValid(PlayerAttributeSet))
+}
+
+void AActionCharacterBase::SetGenericTeamId(const FGenericTeamId& NewTeamID)
+{
+	if (HasAuthority())
 	{
-		PlayerAttributeSet->SetShield(Shield);
+		MyTeamID = NewTeamID;
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cannot set team for %s on non-authority"), *GetPathName(this));
+	}
+}
+
+FGenericTeamId AActionCharacterBase::GetGenericTeamId() const
+{
+	return MyTeamID;
 }
