@@ -148,37 +148,14 @@ void APlayerBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	// AI won't have PlayerControllers so we can init again here just to be sure. No harm in initing twice for heroes that have PlayerControllers.
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-
 	WeaponChangingDelayReplicationTagChangedDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(WeaponChangingDelayReplicationTag)
 		.AddUObject(this, &APlayerBase::WeaponChangingDelayReplicationTagChanged);
 
-	// If we handle players disconnecting and rejoining in the future, we'll have to change this so that possession from rejoining doesn't reset attributes.
-	// For now assume possession = spawn/respawn.
-	InitializeAttributes();
-
-	AddStartupEffects();
-
-	AddCharacterAbilities();
-
 	PlayerController = Cast<AActionPlayerController>(GetController());
-	if (PlayerController)
+	/*if (PlayerController)
 	{
-		//PC->CreateHUD();
-	}
-
-	if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
-	{
-		// Set Health/Mana/Stamina to their max. This is only necessary for *Respawn*.
-		SetHealth(GetMaxHealth());
-		SetMana(GetMaxMana());
-		SetStamina(GetMaxStamina());
-		SetShield(GetMaxShield());
-	}
-
-	// Remove Dead tag
-	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(DeadTag));
+		PC->CreateHUD();
+	}*/
 
 	//InitializeFloatingStatusBar();
 

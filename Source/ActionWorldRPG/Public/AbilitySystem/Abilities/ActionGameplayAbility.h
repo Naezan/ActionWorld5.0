@@ -117,7 +117,10 @@ public:
 		virtual bool IsPredictionKeyValidForMorePrediction() const;
 
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+	
+	
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 
 	// Allows C++ and Blueprint abilities to override how cost is checked in case they don't use a GE like weapon ammo
@@ -137,6 +140,10 @@ public:
 
 	//UFUNCTION(BlueprintCallable, Category = "Ability")
 	//	virtual void ResetHUDReticle();
+
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+		AActionCharacterBase* GetActionCharacterFromActorInfo() const;
+
 
 	// Sends TargetData from the client to the Server and creates a new Prediction Window
 	UFUNCTION(BlueprintCallable, Category = "Ability")
@@ -196,4 +203,6 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ability|Animation", Meta = (AdvancedDisplay = "OverrideBlendOutTime"))
 		void MontageStopForAllMeshes(float OverrideBlendOutTime = -1.0f);
+
+
 };

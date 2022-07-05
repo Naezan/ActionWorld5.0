@@ -43,6 +43,48 @@ void AActionCharacterBase::BeginPlay()
 	
 }
 
+void AActionCharacterBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// Initialize our abilities
+	if (AbilitySystemComponent)
+	{
+		// AI won't have PlayerControllers so we can init again here just to be sure. No harm in initing twice for heroes that have PlayerControllers.
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+		// If we handle players disconnecting and rejoining in the future, we'll have to change this so that possession from rejoining doesn't reset attributes.
+		// For now assume possession = spawn/respawn.
+		InitializeAttributes();
+
+		AddStartupEffects();
+
+		AddCharacterAbilities();
+
+		//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, TEXT("StartUpAbility"));
+
+		UE_LOG(LogTemp, Warning, TEXT("%d"), AbilitySystemComponent->GetActivatableAbilities().Num());
+	}
+	
+
+	if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
+	{
+		// Set Health/Mana/Stamina to their max. This is only necessary for *Respawn*.
+		SetHealth(GetMaxHealth());
+		SetMana(GetMaxMana());
+		SetStamina(GetMaxStamina());
+		SetShield(GetMaxShield());
+	}
+
+	// Remove Dead tag
+	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(DeadTag));
+}
+
+UActionAbilitySystemComponent* AActionCharacterBase::GetActionAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
 UAbilitySystemComponent* AActionCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
@@ -115,6 +157,16 @@ void AActionCharacterBase::AddDamageNumber(float Damage, FGameplayTagContainer D
 	{
 		GetWorldTimerManager().SetTimer(DamageNumberTimer, this, &AActionCharacterBase::ShowDamageNumber, 0.1, true, 0.0f);
 	}
+}
+
+bool AActionCharacterBase::ActivateAbilityWithTags(FGameplayTagContainer AbilityTags, bool bAllowRemoteActivation)
+{
+	if (AbilitySystemComponent)
+	{
+		return AbilitySystemComponent->TryActivateAbilitiesByTag(AbilityTags, bAllowRemoteActivation);
+	}
+
+	return false;
 }
 
 int32 AActionCharacterBase::GetCharacterLevel() const
@@ -208,6 +260,8 @@ void AActionCharacterBase::AddCharacterAbilities()
 		return;
 	}
 
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("%s() %s Damage Received"), *FString(__FUNCTION__), *GetName());
+
 	for (TSubclassOf<UActionGameplayAbility>& StartupAbility : CharacterAbilities)
 	{
 		AbilitySystemComponent->GiveAbility(
@@ -215,6 +269,8 @@ void AActionCharacterBase::AddCharacterAbilities()
 			GetAbilityLevel(StartupAbility.GetDefaultObject()->AbilityID), 
 			static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this));
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("%s() %s AbilityActivated"), *FString(__FUNCTION__), *GetName());
 
 	AbilitySystemComponent->CharacterAbilitiesGiven = true;
 }

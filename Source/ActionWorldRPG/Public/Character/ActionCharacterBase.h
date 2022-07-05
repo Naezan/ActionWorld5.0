@@ -57,8 +57,12 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Only called on the Server. Calls before Server's AcknowledgePossession.
+	virtual void PossessedBy(AController* NewController) override;
+
 public:
-	// Implement IAbilitySystemInterface
+	UFUNCTION(BlueprintCallable, Category = "Character")
+		UActionAbilitySystemComponent* GetActionAbilitySystemComponent() const;
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	class UAmmoAttributeSet* GetAmmoAttributeSet() const;
@@ -74,17 +78,22 @@ public:
 	virtual void RemoveCharacterAbilities();
 
 	UFUNCTION()
-	virtual void Die();
+		virtual void Die();
 
 	//BlueprintImplementableEvent함수는 가상일 수 없다
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "Die"))
-	void K2_Die();
+		void K2_Die();
 
 	UFUNCTION(BlueprintCallable, Category = "Character")
 		virtual void FinishDying();
 
 	virtual void AddDamageNumber(float Damage, FGameplayTagContainer DamageNumberTags);
 
+	//===========================
+	// Ability
+	//===========================
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		bool ActivateAbilityWithTags(FGameplayTagContainer AbilityTags, bool bAllowRemoteActivation = true);
 
 
 	//===========================
@@ -141,6 +150,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character")
 		FText CharacterName;
+
+	// Melee Animation
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")
+		UAnimMontage* MeleeMontage;
 
 	// Death Animation
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")

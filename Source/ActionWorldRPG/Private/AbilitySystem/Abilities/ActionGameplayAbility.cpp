@@ -196,6 +196,16 @@ bool UActionGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 
 }
 
+void UActionGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+}
+
+void UActionGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
 bool UActionGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {
 	return Super::CheckCost(Handle, ActorInfo, OptionalRelevantTags) && CheckCost(Handle, *ActorInfo);
@@ -212,6 +222,11 @@ void UActionGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle, 
 	ApplyCost(Handle, *ActorInfo, ActivationInfo);
 	Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
 
+}
+
+AActionCharacterBase* UActionGameplayAbility::GetActionCharacterFromActorInfo() const
+{
+	return CurrentActorInfo ? Cast<AActionCharacterBase>(CurrentActorInfo->AvatarActor.Get()) : nullptr;
 }
 
 void UActionGameplayAbility::SendTargetDataToServer(const FGameplayAbilityTargetDataHandle& TargetData)
