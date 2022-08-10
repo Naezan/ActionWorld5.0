@@ -87,7 +87,7 @@ void AActionPlayerController::ServerKill_Implementation()
 	APlayerBase* PC = GetOwner<APlayerBase>();
 	if (PC)
 	{
-		PC->GetPlayerAttributeSet()->SetHealth(0.f);
+		PC->GetDefaultAttributeSet()->SetHealth(0.f);
 	}
 }
 

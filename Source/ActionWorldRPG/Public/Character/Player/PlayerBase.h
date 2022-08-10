@@ -62,9 +62,6 @@ class ACTIONWORLDRPG_API APlayerBase : public AActionCharacterBase, public IInte
 public:
 	APlayerBase();
 
-	// Friended to allow access to handle functions above
-	friend UPlayerAttributeSet;
-
 	//어빌리티 관련프로퍼티
 	FGameplayTag CurrentWeaponTag;
 
@@ -80,44 +77,12 @@ public:
 
 	virtual void FinishDying() override;
 
-	//AttributeSet
-	class UPlayerAttributeSet* GetPlayerAttributeSet() const;
-
 	//3인칭 프로퍼티
 	UFUNCTION(BlueprintCallable, Category = "Character")
 		virtual bool IsInFirstPersonPerspective() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
 		USkeletalMeshComponent* GetThirdPersonMesh() const;
-
-
-	//===========================
-	// Get Attributes
-	//===========================
-		virtual int32 GetCharacterLevel() const override;
-
-		virtual float GetHealth() const override;
-
-		virtual float GetMaxHealth() const override;
-
-		virtual float GetMana() const override;
-
-		virtual float GetMaxMana() const override;
-
-		virtual float GetStamina() const override;
-
-		virtual float GetMaxStamina() const override;
-
-		virtual float GetShield() const override;
-
-		virtual float GetMaxShield() const override;
-
-	// Gets the Current value of MoveSpeed
-		virtual float GetMoveSpeed() const override;
-
-	// Gets the Base value of MoveSpeed
-		virtual float GetMoveSpeedBaseValue() const override;
-
 
 	//=========== Weapon ============
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -206,6 +171,10 @@ protected:
 	void HandleNextWeaponActionReleased();
 	void HandlePreviousWeaponActionPressed();
 	void HandlePreviousWeaponActionReleased();
+	void HandleEmoteActionPressed();
+	void HandleEmoteActionReleased();
+	void HandleInteractActionPressed();
+	void HandleInteractActionReleased();
 
 	void CallGenericConfirm();
 	void CallGenericCancel();
@@ -241,6 +210,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
 		TObjectPtr<UInputAction> PreviousWeaponAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> EmoteAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> InteractAction;
 
 	//=============================
 
@@ -305,13 +280,6 @@ protected:
 
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
 		AWeaponBase* CurrentWeapon;
-
-	/** List of attributes modified by the ability system */
-	UPROPERTY()
-		UPlayerAttributeSet* PlayerAttributeSet;
-
-	//UPROPERTY()
-	//class UAmmoAttributeSet* AmmoAttributeSet;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Character")
 		TSubclassOf<UGameplayEffect> DeathEffect;
@@ -392,12 +360,4 @@ protected:
 	* ZoomFOV Aiming
 	*/
 	void InterpFOV(float DeltaTime);
-
-	/*
-	* AttributeSet
-	*/
-	virtual void SetHealth(float Health) override;
-	virtual void SetMana(float Mana) override;
-	virtual void SetStamina(float Stamina) override;
-	virtual void SetShield(float Shield) override;
 };

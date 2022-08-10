@@ -6,7 +6,9 @@
 #include "GameFramework/Character.h"
 
 #include "../../ActionWorldRPG.h"
+
 //¾îºô¸®Æ¼
+#include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/Attributes/PlayerAttributeSet.h"
 
@@ -50,6 +52,9 @@ public:
 	// Sets default values for this character's properties
 	AActionCharacterBase();
 
+	// Friended to allow access to handle functions above
+	friend UPlayerAttributeSet;
+
 	UPROPERTY(BlueprintAssignable, Category = "Character")
 		FCharacterDiedDelegate OnCharacterDied;
 
@@ -64,6 +69,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Character")
 		UActionAbilitySystemComponent* GetActionAbilitySystemComponent() const;
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	//AttributeSet
+	class UPlayerAttributeSet* GetDefaultAttributeSet() const;
 
 	class UAmmoAttributeSet* GetAmmoAttributeSet() const;
 
@@ -145,6 +153,10 @@ protected:
 	/** The component used to handle ability system interactions */
 	UActionAbilitySystemComponent* AbilitySystemComponent;
 
+	/** List of attributes modified by the ability system */
+	UPROPERTY()
+		UPlayerAttributeSet* DefaultAttributeSet;
+
 	UPROPERTY()
 		UAmmoAttributeSet* AmmoAttributeSet;
 
@@ -154,6 +166,10 @@ protected:
 	// Melee Animation
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")
 		UAnimMontage* MeleeMontage;
+
+	// Hit Animation
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")
+		UAnimMontage* HitMontage;
 
 	// Death Animation
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")

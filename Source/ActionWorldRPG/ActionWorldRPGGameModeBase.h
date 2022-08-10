@@ -17,6 +17,12 @@ class ACTIONWORLDRPG_API AActionWorldRPGGameModeBase : public AGameModeBase
 public:
 	AActionWorldRPGGameModeBase();
 
+	//Begin GameModeBase interface
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	//End GameModeBase interface
+
+	void UpdateLoadState();
+
 	void PlayerDied(AController* Controller);
 
 protected:

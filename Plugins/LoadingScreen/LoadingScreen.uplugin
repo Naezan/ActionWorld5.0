@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "LoadingScreen",
+	"Description": "Simple Loading Screen System",
+	"Category": "Other",
+	"CreatedBy": "Naezan",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "LoadingScreen",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "StartupLoadingScreen",
+			"Type": "ClientOnly",
+			"LoadingPhase": "PreEarlyLoadingScreen"
+		}
+	]
+}

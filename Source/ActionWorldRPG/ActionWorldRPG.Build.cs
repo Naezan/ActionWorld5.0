@@ -11,7 +11,10 @@ public class ActionWorldRPG : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[] {
             "Core", "CoreUObject", "Engine", "InputCore",
             "GameplayAbilities", "GameplayTasks", "GameplayTags",
-            "UMG", "Paper2D", "EnhancedInput", "PhysicsCore", "AIModule" });
+            "UMG", "Paper2D", "EnhancedInput", "PhysicsCore", "AIModule",
+            "ModularGameplay", "GameFeatures",
+            "LoadingScreen"
+        });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
 

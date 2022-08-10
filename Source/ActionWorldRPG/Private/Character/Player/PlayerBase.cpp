@@ -8,7 +8,6 @@
 #include "Kismet/KismetMathLibrary.h"
 
 //¾îºô¸®Æ¼
-#include "AbilitySystem/Attributes/PlayerAttributeSet.h"
 #include "AbilitySystem/Attributes/AmmoAttributeSet.h"
 #include "AbilitySystem/ActionAbilitySystemComponent.h"
 
@@ -60,8 +59,6 @@ APlayerBase::APlayerBase()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
 	CameraComp->SetupAttachment(CameraSpringArmComp);
 	CameraComp->bUsePawnControlRotation = false;
-
-	PlayerAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
 
 	//Ä¸½¶ÄÄÆ÷³ÍÆ®
 	GetCapsuleComponent()->InitCapsuleSize(94.f, 42.f);
@@ -141,6 +138,16 @@ void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 			EnhancedInputComponent->BindAction(PreviousWeaponAction, ETriggerEvent::Triggered, this, &APlayerBase::HandlePreviousWeaponActionPressed);
 			EnhancedInputComponent->BindAction(PreviousWeaponAction, ETriggerEvent::Completed, this, &APlayerBase::HandlePreviousWeaponActionReleased);
 		}
+		if (EmoteAction)
+		{
+			EnhancedInputComponent->BindAction(EmoteAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleEmoteActionPressed);
+			EnhancedInputComponent->BindAction(EmoteAction, ETriggerEvent::Completed, this, &APlayerBase::HandleEmoteActionReleased);
+		}
+		if (InteractAction)
+		{
+			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleInteractActionPressed);
+			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &APlayerBase::HandleInteractActionReleased);
+		}
 	}
 }
 
@@ -204,11 +211,6 @@ void APlayerBase::FinishDying()
 	Super::FinishDying();
 }
 
-UPlayerAttributeSet* APlayerBase::GetPlayerAttributeSet() const
-{
-	return PlayerAttributeSet;
-}
-
 bool APlayerBase::IsInFirstPersonPerspective() const
 {
 	return bIsFirstPersonPerspective;
@@ -217,108 +219,6 @@ bool APlayerBase::IsInFirstPersonPerspective() const
 USkeletalMeshComponent* APlayerBase::GetThirdPersonMesh() const
 {
 	return GetMesh();
-}
-
-int32 APlayerBase::GetCharacterLevel() const
-{
-	//TODO
-	return 1;
-}
-
-float APlayerBase::GetHealth() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetHealth();
-	}
-
-	return 0.0f;
-}
-
-float APlayerBase::GetMaxHealth() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxHealth();
-	}
-
-	return 0.0f;
-}
-
-float APlayerBase::GetMana() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMana();
-	}
-	return 0.0f;
-}
-
-float APlayerBase::GetMaxMana() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxMana();
-	}
-	return 0.0f;
-}
-
-float APlayerBase::GetStamina() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetStamina();
-	}
-
-	return 0.0f;
-}
-
-float APlayerBase::GetMaxStamina() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxStamina();
-	}
-
-	return 0.0f;
-}
-
-float APlayerBase::GetShield() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetShield();
-	}
-	return 0.0f;
-}
-
-float APlayerBase::GetMaxShield() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMaxShield();
-	}
-	return 0.0f;
-}
-
-float APlayerBase::GetMoveSpeed() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMoveSpeed();
-	}
-
-	return 0.0f;
-}
-
-float APlayerBase::GetMoveSpeedBaseValue() const
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		return PlayerAttributeSet->GetMoveSpeedAttribute().GetGameplayAttributeData(PlayerAttributeSet)->GetBaseValue();
-	}
-
-	return 0.0f;
 }
 
 AWeaponBase* APlayerBase::GetCurrentWeapon() const
@@ -675,11 +575,15 @@ void APlayerBase::HandleWeaponSecondaryActionReleased()
 void APlayerBase::HandleWeaponAlternateActionPressed()
 {
 	SendLocalInputToASC(true, EActionAbilityInputID::AlternateFire);
+	bIsAiming = true;
+	bUseControllerRotationYaw = true;
 }
 
 void APlayerBase::HandleWeaponAlternateActionReleased()
 {
 	SendLocalInputToASC(false, EActionAbilityInputID::AlternateFire);
+	bIsAiming = false;
+	bUseControllerRotationYaw = false;
 }
 
 void APlayerBase::HandleReloadActionPressed()
@@ -710,6 +614,26 @@ void APlayerBase::HandlePreviousWeaponActionPressed()
 void APlayerBase::HandlePreviousWeaponActionReleased()
 {
 	SendLocalInputToASC(false, EActionAbilityInputID::PrevWeapon);
+}
+
+void APlayerBase::HandleEmoteActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::Emote);
+}
+
+void APlayerBase::HandleEmoteActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::Emote);
+}
+
+void APlayerBase::HandleInteractActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::Interact);
+}
+
+void APlayerBase::HandleInteractActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::Interact);
 }
 
 void APlayerBase::CallGenericConfirm()
@@ -810,7 +734,7 @@ void APlayerBase::OnRep_PlayerState()
 
 	if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SetHealth"));
+		//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SetHealth"));
 
 		// Set Health/Mana/Stamina/Shield to their max. This is only for *Respawn*. It will be set (replicated) by the
 		// Server, but we call it here just to be a little more responsive.
@@ -1257,36 +1181,4 @@ EPhysicalSurface APlayerBase::GetSurfaceType()
 		QueryParams);
 
 	return UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
-}
-
-void APlayerBase::SetHealth(float Health)
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		PlayerAttributeSet->SetHealth(Health);
-	}
-}
-
-void APlayerBase::SetMana(float Mana)
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		PlayerAttributeSet->SetMana(Mana);
-	}
-}
-
-void APlayerBase::SetStamina(float Stamina)
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		PlayerAttributeSet->SetStamina(Stamina);
-	}
-}
-
-void APlayerBase::SetShield(float Shield)
-{
-	if (IsValid(PlayerAttributeSet))
-	{
-		PlayerAttributeSet->SetShield(Shield);
-	}
 }

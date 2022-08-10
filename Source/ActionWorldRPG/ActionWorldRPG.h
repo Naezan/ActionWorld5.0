@@ -37,5 +37,7 @@ enum class EActionAbilityInputID : uint8
 	// 10 PrevWeapon
 	PrevWeapon			UMETA(DisplayName = "Previous Weapon"),
 	// 11 Interact
-	Interact			UMETA(DisplayName = "Interact")
+	Interact			UMETA(DisplayName = "Interact"),
+	// 12 Emote
+	Emote				UMETA(DisplayName = "Emote"),
 };

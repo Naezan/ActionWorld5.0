@@ -116,7 +116,7 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 				WasAlive = TargetCharacter->IsAlive();
 			}
 
-			if (!TargetCharacter->IsAlive())
+			if (!WasAlive)
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("%s() %s is NOT alive when receiving damage"), *FString(__FUNCTION__), *TargetCharacter->GetName());
 			}

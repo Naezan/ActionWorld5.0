@@ -26,8 +26,10 @@ AActionCharacterBase::AActionCharacterBase()
 	PrimaryActorTick.bCanEverTick = false;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UActionAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	UE_LOG(LogTemp, Warning, TEXT("AbilitySystemSet"));
 	AbilitySystemComponent->SetIsReplicated(true);
 
+	DefaultAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("DefaultAttributeSet"));
 	AmmoAttributeSet = CreateDefaultSubobject<UAmmoAttributeSet>(TEXT("AmmoAttributeSet"));
 
 	// Cache tags
@@ -63,21 +65,20 @@ void AActionCharacterBase::PossessedBy(AController* NewController)
 
 		//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, TEXT("StartUpAbility"));
 
-		UE_LOG(LogTemp, Warning, TEXT("%d"), AbilitySystemComponent->GetActivatableAbilities().Num());
-	}
-	
+		//UE_LOG(LogTemp, Warning, TEXT("%d"), AbilitySystemComponent->GetActivatableAbilities().Num());
 
-	if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
-	{
-		// Set Health/Mana/Stamina to their max. This is only necessary for *Respawn*.
-		SetHealth(GetMaxHealth());
-		SetMana(GetMaxMana());
-		SetStamina(GetMaxStamina());
-		SetShield(GetMaxShield());
-	}
+		if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
+		{
+			// Set Health/Mana/Stamina to their max. This is only necessary for *Respawn*.
+			SetHealth(GetMaxHealth());
+			SetMana(GetMaxMana());
+			SetStamina(GetMaxStamina());
+			SetShield(GetMaxShield());
+		}
 
-	// Remove Dead tag
-	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(DeadTag));
+		// Remove Dead tag
+		AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(DeadTag));
+	}
 }
 
 UActionAbilitySystemComponent* AActionCharacterBase::GetActionAbilitySystemComponent() const
@@ -88,6 +89,10 @@ UActionAbilitySystemComponent* AActionCharacterBase::GetActionAbilitySystemCompo
 UAbilitySystemComponent* AActionCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+UPlayerAttributeSet* AActionCharacterBase::GetDefaultAttributeSet() const
+{
+	return DefaultAttributeSet;
 }
 UAmmoAttributeSet* AActionCharacterBase::GetAmmoAttributeSet() const
 {
@@ -171,56 +176,103 @@ bool AActionCharacterBase::ActivateAbilityWithTags(FGameplayTagContainer Ability
 
 int32 AActionCharacterBase::GetCharacterLevel() const
 {
-	return int32();
+	//TODO
+	return 1;
 }
 
 float AActionCharacterBase::GetHealth() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetHealth();
+	}
+
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetMaxHealth() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetMaxHealth();
+	}
+
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetMana() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetMana();
+	}
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetMaxMana() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetMaxMana();
+	}
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetStamina() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetStamina();
+	}
+
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetMaxStamina() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetMaxStamina();
+	}
+
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetShield() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetShield();
+	}
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetMaxShield() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetMaxShield();
+	}
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetMoveSpeed() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetMoveSpeed();
+	}
+
 	return 0.0f;
 }
 
 float AActionCharacterBase::GetMoveSpeedBaseValue() const
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		return DefaultAttributeSet->GetMoveSpeedAttribute().GetGameplayAttributeData(DefaultAttributeSet)->GetBaseValue();
+	}
+
 	return 0.0f;
 }
 
@@ -279,6 +331,7 @@ void AActionCharacterBase::InitializeAttributes()
 {
 	if (!IsValid(AbilitySystemComponent))
 	{
+		UE_LOG(LogTemp, Error, TEXT("%s() Missing AbilitySystemComponent for %s. Please fill in the character's Blueprint."), *FString(__FUNCTION__), *GetName());
 		return;
 	}
 
@@ -328,18 +381,34 @@ void AActionCharacterBase::ShowDamageNumber()
 
 void AActionCharacterBase::SetHealth(float Health)
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		DefaultAttributeSet->SetHealth(Health);
+	}
 }
 
 void AActionCharacterBase::SetMana(float Mana)
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		DefaultAttributeSet->SetMana(Mana);
+	}
 }
 
 void AActionCharacterBase::SetStamina(float Stamina)
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		DefaultAttributeSet->SetStamina(Stamina);
+	}
 }
 
 void AActionCharacterBase::SetShield(float Shield)
 {
+	if (IsValid(DefaultAttributeSet))
+	{
+		DefaultAttributeSet->SetShield(Shield);
+	}
 }
 
 void AActionCharacterBase::SetGenericTeamId(const FGenericTeamId& NewTeamID)

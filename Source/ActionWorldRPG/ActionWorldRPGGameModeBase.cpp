@@ -6,6 +6,8 @@
 #include "Character/ActionCharacterBase.h"
 #include "Character/Player/ActionPlayerController.h"
 
+#include "ActionGameState.h"
+
 #include "GameFramework/SpectatorPawn.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -18,6 +20,21 @@ AActionWorldRPGGameModeBase::AActionWorldRPGGameModeBase()
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s() Failed to find HeroClass. If it was moved, please update the reference location in C++."), *FString(__FUNCTION__));
 	}
+}
+
+void AActionWorldRPGGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+
+	GEngine->AddOnScreenDebugMessage(99, 5, FColor::Blue, TEXT("InitGame"));
+
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::UpdateLoadState);
+}
+
+void AActionWorldRPGGameModeBase::UpdateLoadState()
+{
+	AActionGameState* ActionGameState = Cast<AActionGameState>(GameState);
+	ActionGameState->StartLoadGame();
 }
 
 void AActionWorldRPGGameModeBase::PlayerDied(AController* Controller)
