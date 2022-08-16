@@ -5,7 +5,7 @@ void FStartupLoadingScreen::Init()
 {
     FPreLoadScreenBase::Init();
     PreLoadingScreenWidget = SNew(SStartupLoadingScreenWidget);
-    UE_LOG(LogTemp, Warning, TEXT("StartUpLoadingScreenInit"));
+    //UE_LOG(LogTemp, Warning, TEXT("StartUpLoadingScreenInit"));
 }
 
 void FStartupLoadingScreen::CleanUp()

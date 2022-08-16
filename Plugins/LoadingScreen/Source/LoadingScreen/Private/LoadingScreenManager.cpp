@@ -184,7 +184,6 @@ void ULoadingScreenManager::UpdateLoadingScreen()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HideLoadingScreen"));
 		//한번만 호출됩니다.
 		HideLoadingScreen();
 
@@ -412,7 +411,6 @@ void ULoadingScreenManager::ShowLoadingScreen()
 	if (IsShowingInitialLoadingScreen())
 	{
 		//Do Nothing
-		UE_LOG(LogTemp, Warning, TEXT("InitLoadingScreen"));
 	}
 	else
 	{
@@ -463,7 +461,6 @@ void ULoadingScreenManager::HideLoadingScreen()
 	if (IsShowingInitialLoadingScreen())
 	{
 		//Do Nothing
-		UE_LOG(LogTemp, Warning, TEXT("InitLoadingScreen"));
 	}
 	else
 	{

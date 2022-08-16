@@ -26,7 +26,7 @@ AActionCharacterBase::AActionCharacterBase()
 	PrimaryActorTick.bCanEverTick = false;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UActionAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	UE_LOG(LogTemp, Warning, TEXT("AbilitySystemSet"));
+	//UE_LOG(LogTemp, Warning, TEXT("AbilitySystemSet"));
 	AbilitySystemComponent->SetIsReplicated(true);
 
 	DefaultAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("DefaultAttributeSet"));

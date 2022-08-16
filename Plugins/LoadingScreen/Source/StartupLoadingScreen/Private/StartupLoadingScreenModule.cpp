@@ -32,7 +32,7 @@ void FStartupLoadingScreenModule::OnPreLoadScreenManagerCleanUp()
 	{
 		ShutdownModule();
 		PreLoadingScreen->CleanUp();
-		UE_LOG(LogTemp, Warning, TEXT("CleanUpStartupLoadingScreen"));
+		//UE_LOG(LogTemp, Warning, TEXT("CleanUpStartupLoadingScreen"));
 	}
 	PreLoadingScreen.Reset();
 }
