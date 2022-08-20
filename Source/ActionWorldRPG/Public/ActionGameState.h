@@ -8,10 +8,14 @@
 
 #include "ActionGameState.generated.h"
 
+class UBOutExperienceManagerComponent;
+
 enum class EActionLoadState
 {
 	Unloaded,
 	Loading, 
+	LoadingGameFeatures,
+	ExcutingGameFeatureActions,
 	Loaded,
 	Deactivated,
 };
@@ -46,7 +50,12 @@ public:
 	void StartLoadGame();
 	void LoadCompleteGame();
 
+	void OnExperienceFullLoadCompleted();
+	void OnAllActionsDeactivated();
+
 private:
+	UPROPERTY()
+	UBOutExperienceManagerComponent* ExperienceManagerComponent;
 	//UPROPERTY()
 	//GameStateComponent
 	EActionLoadState LoadState = EActionLoadState::Unloaded;

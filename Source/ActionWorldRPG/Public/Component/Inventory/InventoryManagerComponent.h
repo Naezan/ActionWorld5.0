@@ -54,17 +54,17 @@ struct FItemData
 };
 
 USTRUCT(BlueprintType)
-struct FEquipItemType
+struct FEquipItemContainer
 {
 	GENERATED_BODY()
 
-		FEquipItemType()
-		: EquipIndex(-1)
+		FEquipItemContainer()
+		: EquipItemIndex(-1)
 	{}
 
-	FEquipItemType(const FPrimaryAssetType& InItemType, int32 InEquipIndex)
+	FEquipItemContainer(const FPrimaryAssetType& InItemType, int32 InEquipItemIndex)
 		: ItemType(InItemType)
-		, EquipIndex(InEquipIndex)
+		, EquipItemIndex(InEquipItemIndex)
 	{}
 
 	//데이터 에셋정보
@@ -73,38 +73,38 @@ struct FEquipItemType
 
 	//주무기 보조무기 근접무기
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Item)
-		int32 EquipIndex;
+		int32 EquipItemIndex;
 
-	bool operator==(const FEquipItemType& Data) const
+	bool operator==(const FEquipItemContainer& Data) const
 	{
-		return ItemType == Data.ItemType && EquipIndex == Data.EquipIndex;
+		return ItemType == Data.ItemType && EquipItemIndex == Data.EquipItemIndex;
 	}
 
-	bool operator!=(const FEquipItemType& Data) const
+	bool operator!=(const FEquipItemContainer& Data) const
 	{
 		return !(*this == Data);
 	}
 
-	friend inline uint32 GetTypeHash(const FEquipItemType& Key)
+	friend inline uint32 GetTypeHash(const FEquipItemContainer& Key)
 	{
 		uint32 Hash = 0;
 
 		Hash = HashCombine(Hash, GetTypeHash(Key.ItemType));
-		Hash = HashCombine(Hash, (uint32)Key.EquipIndex);
+		Hash = HashCombine(Hash, (uint32)Key.EquipItemIndex);
 		return Hash;
 	}
 
 	bool IsValid() const
 	{
-		return ItemType.IsValid() && EquipIndex >= 0;
+		return ItemType.IsValid() && EquipItemIndex >= 0;
 	}
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemChanged, bool, bAdded, UInventoryItem*, Item);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemChangedNative, bool, UInventoryItem*);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquippedItemChanged, FEquipItemType, EquipItem, UInventoryItem*, Item);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEquippedItemChangedNative, FEquipItemType, UInventoryItem*);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquippedItemChanged, FEquipItemContainer, EquipItem, UInventoryItem*, Item);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEquippedItemChangedNative, FEquipItemContainer, UInventoryItem*);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryLoaded);
 DECLARE_MULTICAST_DELEGATE(FOnInventoryLoadedNative);
@@ -118,13 +118,15 @@ public:
 	// Sets default values for this component's properties
 	UInventoryManagerComponent() {}
 
+	virtual void BeginPlay() override;
+
 	//인벤토리에 있는 아이템들 무기 포함(키 : 아이템에셋, 값 : 아이템 개수)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory)
 		TMap<UInventoryItem*, FItemData> InventoryData;
 
 	//현재 장착중인 아이템들(키 : 무기정보, 값 : 아이템에셋)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory)
-		TMap<FEquipItemType, UInventoryItem*> EquippedItems;
+		TMap<FEquipItemContainer, UInventoryItem*> EquippedItems;
 
 	//Begin 인벤토리 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = Inventory)
@@ -146,7 +148,7 @@ public:
 
 	//FOnEquippedItemChanged 바인드 함수
 	UFUNCTION(BlueprintImplementableEvent, Category = Inventory)
-		void EquippedItemChanged(FEquipItemType EquipItemType, UInventoryItem* Item);
+		void EquippedItemChanged(FEquipItemContainer EquipItemType, UInventoryItem* Item);
 
 	//장비창이 비어있다면 자동으로 장착합니다. 아니면 인벤토리로 들어갑니다.
 	UFUNCTION(BlueprintCallable, Category = Inventory)
@@ -166,15 +168,15 @@ public:
 
 	//인벤토리에 있는 아이템 데이터를가져옵니다.(현재 데이터에는 갯수뿐임)
 	UFUNCTION(BlueprintPure, Category = Inventory)
-		void GetInventoryItemData(UInventoryItem* Item, FItemData& /*out*/ ItemData) const;
+		bool GetInventoryItemData(UInventoryItem* Item, FItemData& /*out*/ ItemData) const;
 
 	//장착된 장비의 타입을 셋팅합니다.
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-		bool SetEquippedItem(FEquipItemType EquipItemType, UInventoryItem* Item);
+		bool SetEquippedItem(FEquipItemContainer EquipItemType, UInventoryItem* NewItem);
 
 	//아이템 타입으로 장비를 찾아옵니다.
 	UFUNCTION(BlueprintPure, Category = Inventory)
-		UInventoryItem* GetEquippedItem(FEquipItemType EquipItemType) const;
+		UInventoryItem* GetEquippedItem(FEquipItemContainer EquipItemType) const;
 
 	//데이터 타입에 맞는 장착하고 있는 모든 장비를 가져옵니다.
 	UFUNCTION(BlueprintCallable, Category = Inventory)
@@ -182,7 +184,7 @@ public:
 
 	//아무의미없이 비어있는 슬롯에 인벤토리의 아이템을 순서대로 채워넣습니다.
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-	void FillEmptyEquippedItems();
+		void FillEmptyEquippedItems();
 
 	//Save / Load 필요하면?
 
@@ -191,7 +193,7 @@ public:
 	{
 		return InventoryData;
 	}
-	virtual const TMap<FEquipItemType, UInventoryItem*>& GetEquippedItemMap() const override
+	virtual const TMap<FEquipItemContainer, UInventoryItem*>& GetEquippedItemMap() const override
 	{
 		return EquippedItems;
 	}
@@ -207,4 +209,13 @@ public:
 	{
 		return OnInventoryLoadedNative;
 	}
+
+protected:
+	//특정 아이템을 비어있는 장비창에 넣습니다.
+	bool FillEmptyEquippedItem(UInventoryItem* NewItem);
+
+	//Inventory Delegate Bind Function
+	void NotifyInventoryItemChanged(bool bAdded, UInventoryItem* Item);
+	void NotifyEquippedItemChanged(FEquipItemContainer ItemType, UInventoryItem* Item);
+	void NotifyInventoryChanged();
 };

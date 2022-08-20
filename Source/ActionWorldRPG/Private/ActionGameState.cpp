@@ -4,11 +4,21 @@
 #include "ActionGameState.h"
 #include "Components/GameFrameworkComponentManager.h"
 #include "Engine/AssetManager.h"
-//#include "Components/GameStateComponent.h"
+
+//GameStateComponent
+#include "Component/GameState/BOutExperienceManagerComponent.h"
+#include "Components/GameStateComponent.h"
+
+//GameFeature
+#include "GameFeaturesSubsystem.h"
 
 AActionGameState::AActionGameState()
 {
 	//로딩컴포넌트 추가
+	ExperienceManagerComponent = 
+	CreateDefaultSubobject<UBOutExperienceManagerComponent>(
+	TEXT("ExperienceManagerComponent")
+	);
 }
 
 void AActionGameState::PreInitializeComponents()
@@ -38,10 +48,25 @@ void AActionGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	UGameFrameworkComponentManager::RemoveGameFrameworkComponentReceiver(this);
 
-	if (LoadState == EActionLoadState::Loaded)
-		LoadState = EActionLoadState::Deactivated;
-
 	Super::EndPlay(EndPlayReason);
+
+	//메인 게임피쳐를 비활성화합니다.
+	if (ExperienceManagerComponent != nullptr)
+	{
+		ExperienceManagerComponent->LoadAndActivateGameFeaturePlugin(TEXT("BlackOutCore"), false);
+
+	}
+
+	if (LoadState == EActionLoadState::Loaded)
+	{
+		LoadState = EActionLoadState::Deactivated;
+		UE_LOG(LogTemp, Warning, TEXT("LoadState : Deactivated"));
+
+		//Deactivate GameFeatureAction
+		//
+
+		OnAllActionsDeactivated();
+	}
 }
 
 void AActionGameState::AddPlayerState(APlayerState* PlayerState)
@@ -83,6 +108,7 @@ void AActionGameState::StartLoadGame()
 	check(LoadState == EActionLoadState::Unloaded);
 
 	LoadState = EActionLoadState::Loading;
+	UE_LOG(LogTemp, Warning, TEXT("LoadState : Loading"));
 
 	UAssetManager& AssetManager = UAssetManager::Get();
 
@@ -111,7 +137,38 @@ void AActionGameState::StartLoadGame()
 
 void AActionGameState::LoadCompleteGame()
 {
+	check(LoadState == EActionLoadState::Loading);
+
+	//Exparience 게임 피쳐를 로드 및 활성화합니다.
+	if (ExperienceManagerComponent != nullptr)
+	{
+		LoadState = EActionLoadState::LoadingGameFeatures;
+		UE_LOG(LogTemp, Warning, TEXT("LoadState : LoadingGameFeatures"));
+		ExperienceManagerComponent->LoadAndActivateGameFeaturePlugin(TEXT("BlackOutCore"), true);
+		OnExperienceFullLoadCompleted();
+	}
+	else
+	{
+		OnExperienceFullLoadCompleted();
+	}
+}
+
+void AActionGameState::OnExperienceFullLoadCompleted()
+{
+	//로드하기전 게임피쳐 작업마무리
 	check(LoadState != EActionLoadState::Loaded);
 
+	//Exparience가 가지고 있는 액션 게임피쳐를 등록, 로드 및 활성화합니다.
+	LoadState = EActionLoadState::ExcutingGameFeatureActions;
+	UE_LOG(LogTemp, Warning, TEXT("LoadState : ExcutingGameFeatureActions"));
+
 	LoadState = EActionLoadState::Loaded;
+	UE_LOG(LogTemp, Warning, TEXT("LoadState : Loaded"));
+}
+
+void AActionGameState::OnAllActionsDeactivated()
+{
+	LoadState = EActionLoadState::Unloaded;
+	UE_LOG(LogTemp, Warning, TEXT("LoadState : Unloaded"));
+	ExperienceManagerComponent = nullptr;
 }

@@ -4,6 +4,21 @@
 #include "Character/Player/ActionPlayerController.h"
 #include "Character/Player/PlayerBase.h"
 
+void AActionPlayerController::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+}
+
+void AActionPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+}
+
+void AActionPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
+}
+
 void AActionPlayerController::SetEquippedWeaponPrimaryIconFromSprite(UPaperSprite* InSprite)
 {
 }

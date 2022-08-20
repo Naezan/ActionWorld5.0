@@ -13,6 +13,7 @@
 
 //인터페이스
 #include "Interfaces/InteractCrosshairInterface.h"
+#include "Interfaces/InventoryInterface.h"
 
 #include "PlayerBase.generated.h"
 
@@ -272,12 +273,18 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Camera")
 		UCameraComponent* CameraComp;
 
+	//인벤토리
 	UPROPERTY(ReplicatedUsing = OnRep_Inventory)
 		FPlayerInventory Inventory;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Inventory")
 		TArray<TSubclassOf<AWeaponBase>> DefaultInventoryWeaponClasses;
 
+	//플레이어의 인벤토리 소스에 대한 캐시된 포인터
+	UPROPERTY()
+		TScriptInterface<IInventoryInterface> InventorySource;
+
+	//무기
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
 		AWeaponBase* CurrentWeapon;
 
@@ -290,12 +297,18 @@ protected:
 	FGameplayTag WeaponAmmoTypeNoneTag;
 	FGameplayTag WeaponAbilityTag;
 
+	/** Delegate handles */
+
 	// Attribute changed delegate handles
 	FDelegateHandle PrimaryReserveAmmoChangedDelegateHandle;
 	FDelegateHandle SecondaryReserveAmmoChangedDelegateHandle;
 
 	// Tag changed delegate handles
 	FDelegateHandle WeaponChangingDelayReplicationTagChangedDelegateHandle;
+
+	//Inventory delegate handles
+	FDelegateHandle InventoryUpdateHandle;
+	FDelegateHandle InventoryLoadedHandle;
 
 	// Server spawns default inventory
 	void SpawnDefaultInventory();

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "Character/Player/ModularPlayerController.h"
 #include "AbilitySystem/ActionWorldAbilitySet.h"
 #include "ActionPlayerController.generated.h"
 
@@ -14,9 +14,19 @@ class UPaperSprite;
  *
  */
 UCLASS()
-class ACTIONWORLDRPG_API AActionPlayerController : public APlayerController
+class ACTIONWORLDRPG_API AActionPlayerController : public AModularPlayerController
 {
 	GENERATED_BODY()
+
+public:
+	//Begin AActor
+	virtual void PreInitializeComponents() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	//End AActor
+
+	//Begin APlayerController
+	virtual void ReceivedPlayer() override;
+	//End APlayerController
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
@@ -41,7 +51,7 @@ public:
 	//	void SetHUDReticle(TSubclassOf<class UGSHUDReticle> ReticleClass);
 
 	UFUNCTION(Client, Reliable, WithValidation)
-	void ShowDamageNumber(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags);
+		void ShowDamageNumber(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags);
 	void ShowDamageNumber_Implementation(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags);
 	bool ShowDamageNumber_Validate(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags);
 

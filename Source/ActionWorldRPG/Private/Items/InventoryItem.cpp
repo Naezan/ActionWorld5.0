@@ -12,3 +12,9 @@ bool UInventoryItem::IsConsumable() const
 
     return false;
 }
+
+FPrimaryAssetId UInventoryItem::GetPrimaryAssetId() const
+{
+	//이름은 언제사용하는지 모르겠다
+	return FPrimaryAssetId(ItemType, GetFName());
+}

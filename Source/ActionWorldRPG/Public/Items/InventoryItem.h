@@ -42,4 +42,6 @@ public:
 	//어떻게 사용하는거지?
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = Count)
 		bool IsConsumable() const;
+
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 };

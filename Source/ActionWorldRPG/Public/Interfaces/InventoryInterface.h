@@ -15,9 +15,9 @@ class UInventoryInterface : public UInterface
 
 class UInventoryItem;
 struct FItemData;
-struct FEquipItemType;
+struct FEquipItemContainer;
 typedef TMulticastDelegate<void(bool, UInventoryItem*)> FOnInventoryItemChangedNative;
-typedef TMulticastDelegate<void(FEquipItemType, UInventoryItem*)> FOnEquippedItemChangedNative;
+typedef TMulticastDelegate<void(FEquipItemContainer, UInventoryItem*)> FOnEquippedItemChangedNative;
 typedef TMulticastDelegate<void()> FOnInventoryLoadedNative;
 
 /**
@@ -28,18 +28,18 @@ class ACTIONWORLDRPG_API IInventoryInterface
 	GENERATED_BODY()
 
 public:
-	/** Returns the map of items to data */
+	//모든 인벤토리가 담긴 맵을가져옵니다.
 	virtual const TMap<UInventoryItem*, FItemData>& GetInventoryDataMap() const = 0;
 
-	/** Returns the map of slots to items */
-	virtual const TMap<FEquipItemType, UInventoryItem*>& GetEquippedItemMap() const = 0;
+	//모든 장착된 아이템이 담긴 맵을 가져옵니다.
+	virtual const TMap<FEquipItemContainer, UInventoryItem*>& GetEquippedItemMap() const = 0;
 
-	/** Gets the delegate for inventory item changes */
+	//C++에서만 쓸 수 있는 인벤토리 아이템 델리게이트를 가져옵니다.
 	virtual FOnInventoryItemChangedNative& GetInventoryItemChangedDelegate() = 0;
 
-	/** Gets the delegate for inventory slot changes */
+	//C++에서만 쓸 수 있는 장착된 아이템 델리게이트를 가져옵니다.
 	virtual FOnEquippedItemChangedNative& GetEquippedItemChangedDelegate() = 0;
 
-	/** Gets the delegate for when the inventory loads */
+	//C++에서만 쓸 수 있는 인벤토리 로드 델리게이트를 가져옵니다.
 	virtual FOnInventoryLoadedNative& GetInventoryLoadedDelegate() = 0;
 };
