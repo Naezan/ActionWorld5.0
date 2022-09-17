@@ -51,6 +51,7 @@ public:
 	}
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnLoadingScreenVisibilityChangedDelegate, bool);
+
 	FORCEINLINE FOnLoadingScreenVisibilityChangedDelegate& OnLoadingScreenVisibilityChangedDelegate()
 	{
 		return LoadingScreenVisibilityChanged;

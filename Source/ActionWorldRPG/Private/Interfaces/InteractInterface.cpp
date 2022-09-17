@@ -8,7 +8,7 @@
 
 // Add default functionality here for any IInteractInterface functions that are not pure virtual.
 
-bool IInteractInterface::IsImmediateInteraction_Implementation(UPrimitiveComponent* InteractionComponent) const
+bool IInteractInterface::IsAvailableInteraction_Implementation(UPrimitiveComponent* InteractionComponent) const
 {
 	return false;
 }

@@ -3,6 +3,14 @@
 
 #include "Component/Inventory/InventoryManagerComponent.h"
 
+UInventoryManagerComponent::UInventoryManagerComponent()
+{
+	//인벤토리 초기화 하드코딩 총 슬롯은3개
+	EquippedItems.Add(FEquipItemContainer(0), nullptr);
+	EquippedItems.Add(FEquipItemContainer(1), nullptr);
+	EquippedItems.Add(FEquipItemContainer(2), nullptr);
+}
+
 void UInventoryManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -38,6 +46,8 @@ bool UInventoryManagerComponent::AddInventoryItem(UInventoryItem* NewItem, int32
 	if (OldData != NewData)
 	{
 		InventoryData.Add(NewItem, NewData);
+
+		//인벤토리 아이템 추가 바인드 함수호출 등
 		NotifyInventoryItemChanged(true, NewItem);
 
 		bChanged = true;
@@ -100,7 +110,7 @@ bool UInventoryManagerComponent::RemoveInventoryItem(UInventoryItem* RemoveItem,
 		}
 	}
 
-	//인벤토리가 바뀐부분에서 해도 되지 않을까?
+	//인벤토리 아이템 제거 바인드 함수호출 등
 	NotifyInventoryItemChanged(false, RemoveItem);
 
 	return true;
@@ -159,7 +169,7 @@ bool UInventoryManagerComponent::SetEquippedItem(FEquipItemContainer EquipItemTy
 		{
 			Item.Value = NewItem;
 			NotifyEquippedItemChanged(Item.Key, Item.Value);
-			
+
 			bFound = true;
 		}
 		//같은 아이템을 없애줍니다.
@@ -169,7 +179,7 @@ bool UInventoryManagerComponent::SetEquippedItem(FEquipItemContainer EquipItemTy
 			NotifyEquippedItemChanged(Item.Key, Item.Value);
 		}
 	}
-	
+
 	return bFound;
 }
 
@@ -184,14 +194,11 @@ UInventoryItem* UInventoryManagerComponent::GetEquippedItem(FEquipItemContainer 
 	return nullptr;
 }
 
-void UInventoryManagerComponent::GetAllEquippedItems(TArray<UInventoryItem*>& Items, FPrimaryAssetType ItemType)
+void UInventoryManagerComponent::GetAllEquippedItems(TArray<UInventoryItem*>& Items)
 {
 	for (TPair<FEquipItemContainer, UInventoryItem*>& Item : EquippedItems)
 	{
-		if (Item.Key.ItemType == ItemType || !ItemType.IsValid())
-		{
-			Items.Add(Item.Value);
-		}
+		Items.Add(Item.Value);
 	}
 }
 
@@ -210,21 +217,17 @@ bool UInventoryManagerComponent::FillEmptyEquippedItem(UInventoryItem* NewItem)
 	FEquipItemContainer EmptyItemContainer;
 	for (TPair<FEquipItemContainer, UInventoryItem*>& EquipItem : EquippedItems)
 	{
-		//기존의 아이템 데이터 타입과 일치여부를 확인합니다.
-		if (EquipItem.Key.ItemType == NewItemType)
+		if (EquipItem.Value == NewItem)
 		{
-			if (EquipItem.Value == NewItem)
-			{
-				//이미 같은 아이템이 있는 경우
-				return false;
-			}
-			//아이템종류칸은 있지만 아이템은 없는 경우 + 인덱스값이 작은값에 되도록이면 넣도록
-			//(상황에 맞게 인덱스 위치를 고정하고 셋팅할 수도 있습니다.)
-			else if (EquipItem.Value == nullptr &&
-				(!EmptyItemContainer.IsValid() || EmptyItemContainer.EquipItemIndex > EquipItem.Key.EquipItemIndex))
-			{
-				EmptyItemContainer = EquipItem.Key;
-			}
+			//이미 같은 아이템이 있는 경우
+			return false;
+		}
+		//아이템종류칸은 있지만 아이템은 없는 경우 + 인덱스값이 작은값에 되도록이면 넣도록
+		//(상황에 맞게 인덱스 위치를 고정하고 셋팅할 수도 있습니다.)
+		else if (EquipItem.Value == nullptr &&
+			(!EmptyItemContainer.IsValid() || EmptyItemContainer.EquipItemIndex > EquipItem.Key.EquipItemIndex))
+		{
+			EmptyItemContainer = EquipItem.Key;
 		}
 	}
 
@@ -244,7 +247,7 @@ void UInventoryManagerComponent::NotifyInventoryItemChanged(bool bAdded, UInvent
 	OnInventoryItemChangedNative.Broadcast(bAdded, Item);
 	OnInventoryItemChanged.Broadcast(bAdded, Item);
 
-	//BP함수를 호출해줍니다.
+	//BP함수를 호출해줍니다. 현재 컴포넌트는 게임피쳐에서 사용되고 있기 때문에 BP함수가 호출되지 않습니다.
 	InventoryItemChanged(bAdded, Item);
 }
 
@@ -254,12 +257,14 @@ void UInventoryManagerComponent::NotifyEquippedItemChanged(FEquipItemContainer I
 	OnEquippedItemChangedNative.Broadcast(ItemType, Item);
 	OnEquippedItemChanged.Broadcast(ItemType, Item);
 
+	//현재 컴포넌트는 게임피쳐에서 사용되고 있기 때문에 BP함수가 호출되지 않습니다.
 	EquippedItemChanged(ItemType, Item);
 }
 
 void UInventoryManagerComponent::NotifyInventoryChanged()
 {
-	//BP델리게이트 호출 이전에 C++델리게이트를 먼저 호출합니다.
+	//C++델리게이트 먼저 호출
 	OnInventoryLoadedNative.Broadcast();
+	//BP델리게이트 호출
 	OnInventoryLoaded.Broadcast();
 }

@@ -26,8 +26,8 @@ public:
 
 	//Interaction Immediately
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
-		bool IsImmediateInteraction(UPrimitiveComponent* InteractionComponent) const;
-	virtual bool IsImmediateInteraction_Implementation(UPrimitiveComponent* InteractionComponent) const;
+		bool IsAvailableInteraction(UPrimitiveComponent* InteractionComponent) const;
+	virtual bool IsAvailableInteraction_Implementation(UPrimitiveComponent* InteractionComponent) const;
 
 
 	//Interaction Duration

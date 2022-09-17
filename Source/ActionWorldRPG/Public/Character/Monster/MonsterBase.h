@@ -7,6 +7,7 @@
 
 //인터페이스
 #include "Interfaces/InteractCrosshairInterface.h"
+#include "Interfaces/ItemSpawnableInterface.h"
 
 #include "MonsterBase.generated.h"
 
@@ -14,12 +15,14 @@
  *
  */
 UCLASS()
-class ACTIONWORLDRPG_API AMonsterBase : public AActionCharacterBase, public IInteractCrosshairInterface
+class ACTIONWORLDRPG_API AMonsterBase : public AActionCharacterBase, public IInteractCrosshairInterface, public IItemSpawnableInterface
 {
 	GENERATED_BODY()
 
 public:
 	AMonsterBase();
+
+	virtual void PostInitializeComponents() override;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -32,9 +35,6 @@ public:
 protected:
 	UPROPERTY()
 	class AMonsterAIController* MonsterController;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Monster")
-		TSubclassOf<UGameplayEffect> DeathEffect;
 
 	/* Point for Monster to move to */
 	UPROPERTY(EditAnywhere, Category = "AI", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))

@@ -26,14 +26,14 @@ public:
 	//충돌함수 호출을강제합니다.
 	//BlueprintImplementable함수로 블루프린트함수 호출까지 생각해줄 수도 있을것같다.
 	UFUNCTION()
-	virtual void OnBeginOverlap(
-	class UPrimitiveComponent* OverlappedComp, 
-	class AActor* OtherActor, 
-	class UPrimitiveComponent* OtherComp, 
-	int32 OtherBodyIndex, 
-	bool bFromSweep, 
-	const FHitResult& SweepResult
-	) = 0;
+		virtual void OnBeginOverlap(
+			class UPrimitiveComponent* OverlappedComp,
+			class AActor* OtherActor,
+			class UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex,
+			bool bFromSweep,
+			const FHitResult& SweepResult
+		) = 0;
 
 	UFUNCTION()
 		virtual void OnEndOverlap(
@@ -41,7 +41,4 @@ public:
 			class AActor* OtherActor,
 			class UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex) = 0;
-
-protected:
-	USphereComponent* SphereComponent;
 };

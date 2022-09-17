@@ -22,7 +22,5 @@ protected:
 
 public:	
 	UFUNCTION(BlueprintCallable)
-	bool SpawnItem(/*Transform, ItemCount, ItemType µîµî*/);
-
-		
+	void SpawnLoot(UClass* ItemClass, FTransform const& Transform, int32 ItemCount = 1);
 };

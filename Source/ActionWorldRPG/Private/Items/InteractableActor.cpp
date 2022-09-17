@@ -4,6 +4,9 @@
 #include "Items/InteractableActor.h"
 #include "AbilitySystem/ActionAbilitySystemComponent.h"
 
+//게임피쳐
+#include "Components/GameFrameworkComponentManager.h"
+
 // Sets default values
 AInteractableActor::AInteractableActor()
 {
@@ -22,10 +25,39 @@ UAbilitySystemComponent* AInteractableActor::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void AInteractableActor::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+
+	UGameFrameworkComponentManager::AddGameFrameworkComponentReceiver(this);
+}
+
 // Called when the game starts or when spawned
 void AInteractableActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void AInteractableActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UGameFrameworkComponentManager::RemoveGameFrameworkComponentReceiver(this);
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void AInteractableActor::InteractWithInstigator_Implementation(AActor* Interactor)
+{
+	//여기선 오버라이딩으로 C++함수를 구현하지 않습니다. 빈상태로 둡니다.
+}
+
+void AInteractableActor::InteractDelayWithInstigator_Implementation(AActor* Interactor)
+{
+	//여기선 오버라이딩으로 C++함수를 구현하지 않습니다. 빈상태로 둡니다.
+}
+
+void AInteractableActor::SendToInstigator_Implementation(AActor* Interactor)
+{
+	//여기선 오버라이딩으로 C++함수를 구현하지 않습니다. 빈상태로 둡니다.
 }

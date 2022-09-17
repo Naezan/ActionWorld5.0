@@ -10,7 +10,10 @@ ACollectableItem::ACollectableItem()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
+
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
+	SphereComponent->SetupAttachment(ItemMesh);
 
 	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
 	SphereComponent->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
@@ -31,11 +34,18 @@ void ACollectableItem::BeginPlay()
 
 void ACollectableItem::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	check(ItemCollectorComponent == nullptr);
+	if (ItemCollectorComponent != nullptr)
+	{
+		return;
+	}
 
 	ItemCollectorComponent = OtherActor->FindComponentByClass<UItemCollectorComponent>();
 	if (ItemCollectorComponent != nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("BeginOverlap"));
+
+		//아이템이 다 차있는 등 예외처리
+
 		FollowTarget = OtherActor;
 		FollowTargetTimeline->Play();
 	}
@@ -43,9 +53,18 @@ void ACollectableItem::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActo
 
 void ACollectableItem::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	check(ItemCollectorComponent != nullptr);
-	check(OtherActor == ItemCollectorComponent->GetOwner());
+	if (ItemCollectorComponent == nullptr)
+	{
+		return;
+	}
 
+	if (OtherActor != ItemCollectorComponent->GetOwner())
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("EndOverlap"));
+	FollowTargetTimeline->Stop();
 	ItemCollectorComponent = nullptr;
 	FollowTarget = nullptr;
 }

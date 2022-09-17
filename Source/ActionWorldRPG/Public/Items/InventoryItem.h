@@ -6,6 +6,8 @@
 #include "Engine/DataAsset.h"
 #include "InventoryItem.generated.h"
 
+class UGameplayEffect;
+
 /**
  *
  */
@@ -38,6 +40,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Count)
 		int32 MaxCount;
+
+	//포션이나 탄창같은 아이템이 가지고 있는 이펙트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Abilities)
+		TSubclassOf<UGameplayEffect> OwnGameplayEffect;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = Count)
+		int32 GetItemCount() const;
 
 	//어떻게 사용하는거지?
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = Count)

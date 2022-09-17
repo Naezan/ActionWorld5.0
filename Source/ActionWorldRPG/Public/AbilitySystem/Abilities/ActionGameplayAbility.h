@@ -44,7 +44,7 @@ public:
 	// Constructor and overrides
 	UActionGameplayAbility();
 
-	// Abilities with this set will automatically activate when the input is pressed
+	// 입력을 받았을때 자동으로 활성화 하기 위한 ID
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ability")
 		EActionAbilityInputID AbilityInputID = EActionAbilityInputID::None;
 

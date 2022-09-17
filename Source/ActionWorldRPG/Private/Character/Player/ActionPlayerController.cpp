@@ -3,10 +3,23 @@
 
 #include "Character/Player/ActionPlayerController.h"
 #include "Character/Player/PlayerBase.h"
+#include "HUD/InteractionHUD.h"
 
 void AActionPlayerController::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
+}
+
+void AActionPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	CreateInteractionHUD();
+}
+
+void AActionPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
 }
 
 void AActionPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -19,28 +32,50 @@ void AActionPlayerController::ReceivedPlayer()
 	Super::ReceivedPlayer();
 }
 
-void AActionPlayerController::SetEquippedWeaponPrimaryIconFromSprite(UPaperSprite* InSprite)
+void AActionPlayerController::CreateInteractionHUD()
 {
+	if (InteractionWidget)
+	{
+		return;
+	}
+
+	if (!InteractionWidgetClass)
+	{
+		return;
+	}
+
+	if (!IsLocalPlayerController())
+	{
+		return;
+	}
+
+	InteractionWidget = CreateWidget<UInteractionHUD>(this, InteractionWidgetClass);
+	InteractionWidget->AddToViewport();
 }
 
-void AActionPlayerController::SetEquippedWeaponStatusText(const FText& StatusText)
+UInteractionHUD* AActionPlayerController::GetInteractionHUD()
 {
+	return InteractionWidget;
 }
 
-void AActionPlayerController::SetPrimaryClipAmmo(int32 ClipAmmo)
+int32 AActionPlayerController::GetPrimaryClipAmmo()
 {
+	return int32();
 }
 
-void AActionPlayerController::SetPrimaryReserveAmmo(int32 ReserveAmmo)
+int32 AActionPlayerController::GetPrimaryReserveAmmo()
 {
+	return int32();
 }
 
-void AActionPlayerController::SetSecondaryClipAmmo(int32 SecondaryClipAmmo)
+int32 AActionPlayerController::GetSecondaryClipAmmo()
 {
+	return int32();
 }
 
-void AActionPlayerController::SetSecondaryReserveAmmo(int32 SecondaryReserveAmmo)
+int32 AActionPlayerController::GetSecondaryReserveAmmo()
 {
+	return int32();
 }
 
 void AActionPlayerController::ShowDamageNumber_Implementation(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags)
@@ -73,23 +108,6 @@ void AActionPlayerController::ClientSetControlRotation_Implementation(FRotator N
 bool AActionPlayerController::ClientSetControlRotation_Validate(FRotator NewRotation)
 {
 	return true;
-}
-
-void AActionPlayerController::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-
-	//AGSPlayerState* PS = GetPlayerState<AGSPlayerState>();
-	//if (PS)
-	//{
-	//    // Init ASC with PS (Owner) and our new Pawn (AvatarActor)
-	//    PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, InPawn);
-	//}
-}
-
-void AActionPlayerController::OnRep_PlayerState()
-{
-	Super::OnRep_PlayerState();
 }
 
 void AActionPlayerController::Kill()

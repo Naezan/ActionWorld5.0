@@ -16,9 +16,18 @@ UItemSpawnerComponent::UItemSpawnerComponent()
 void UItemSpawnerComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
-bool UItemSpawnerComponent::SpawnItem()
+void UItemSpawnerComponent::SpawnLoot(UClass* ItemClass, FTransform const& Transform, int32 ItemCount)
 {
-	return false;
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	//20%È®·ü·Î ÅºÃ¢, 30%È®·ü·Î Ã¼·Â¶Ç´Â ¸¶³ª, 5%È®·ü·Î ¹«±â
+
+	for (int32 i = 0; i < ItemCount; ++i)
+	{
+		GetWorld()->SpawnActor(ItemClass, &Transform, SpawnParameters);
+	}
 }

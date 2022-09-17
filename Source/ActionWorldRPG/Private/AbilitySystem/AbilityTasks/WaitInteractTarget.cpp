@@ -66,15 +66,15 @@ void UWaitInteractTarget::LineTrace(FHitResult& OutHitResult, const UWorld* Worl
 			// If bLookForInteractableActor is false, we're looking for an endpoint to trace to
 			if (bLookForInteractableActor && Hit.GetActor())
 			{
-				// bLookForInteractableActor is true, hit component must overlap COLLISION_INTERACTABLE trace channel
-				// This is so that a big Actor like a computer can have a small interactable button.
+				//  충돌한 컴포넌트의 콜리전채널13(Interactable)이 Overlap이라면 아래를 수행합니다.
+				// 큰 액터의 작은부분에서 세부적으로 다룰 수 있습니다. 문에서 문손잡이만 가능하게 한다던지 등
 				if (Hit.Component.IsValid() && Hit.Component.Get()->GetCollisionResponseToChannel(
 					ECollisionChannel::ECC_GameTraceChannel3) == ECollisionResponse::ECR_Overlap)
 				{
-					// Component/Actor must be available to interact
+					// 컴포넌트나 액터가 Interact인터페이스가 구현되어 있다면 아래를 수행합니다.(InteractInteract인터페이스는 블루프린트로 구현됩니다)
 					bool bIsInteractable = Hit.GetActor()->Implements<UInteractInterface>();
 
-					if (bIsInteractable && IInteractInterface::Execute_IsImmediateInteraction(Hit.GetActor(), Hit.Component.Get()))
+					if (bIsInteractable && IInteractInterface::Execute_IsAvailableInteraction(Hit.GetActor(), Hit.Component.Get()))
 					{
 						OutHitResult = Hit;
 						OutHitResult.bBlockingHit = true; // treat it as a blocking hit

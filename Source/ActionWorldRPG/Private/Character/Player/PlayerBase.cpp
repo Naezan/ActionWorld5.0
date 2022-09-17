@@ -33,6 +33,7 @@
 #include "EnhancedInputComponent.h"
 
 //UI
+#include "HUD/InteractionHUD.h"
 
 APlayerBase::APlayerBase()
 {
@@ -88,6 +89,7 @@ APlayerBase::APlayerBase()
 	BaseEyeHeight = 58.f;
 	bUseControllerRotationYaw = false;
 	bGenerateOverlapEventsDuringLevelStreaming = false;
+	
 	//SpawnCollisionHandlingMethod Always Spawn, Ignore Collisions
 }
 
@@ -151,6 +153,61 @@ void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	}
 }
 
+void APlayerBase::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	PlayerController = Cast<AActionPlayerController>(GetController());
+	if (PlayerController)
+	{
+		PlayerController->CreateInteractionHUD();
+	}
+
+	// Bind player input to the AbilitySystemComponent. Also called in SetupPlayerInputComponent because of a potential race condition.
+	//BindASCInput();
+
+	AbilitySystemComponent->AbilityFailedCallbacks.AddUObject(this, &APlayerBase::OnAbilityActivationFailed);
+
+	if (CurrentWeapon)
+	{
+		// If current weapon repped before PlayerState, set tag on ASC
+		AbilitySystemComponent->AddLooseGameplayTag(CurrentWeaponTag);
+		// Update owning character and ASC just in case it repped before PlayerState
+		CurrentWeapon->SetOwningCharacter(this);
+
+		if (!PrimaryReserveAmmoChangedDelegateHandle.IsValid())
+		{
+			PrimaryReserveAmmoChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(CurrentWeapon->PrimaryAmmoType)).AddUObject(this, &APlayerBase::CurrentWeaponPrimaryReserveAmmoChanged);
+		}
+		if (!SecondaryReserveAmmoChangedDelegateHandle.IsValid())
+		{
+			SecondaryReserveAmmoChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(CurrentWeapon->SecondaryAmmoType)).AddUObject(this, &APlayerBase::CurrentWeaponSecondaryReserveAmmoChanged);
+		}
+	}
+
+	//if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
+	//{
+	//	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SetHealth"));
+
+	//	// Set Health/Mana/Stamina/Shield to their max. This is only for *Respawn*. It will be set (replicated) by the
+	//	// Server, but we call it here just to be a little more responsive.
+	//	SetHealth(GetMaxHealth());
+	//	SetMana(GetMaxMana());
+	//	SetStamina(GetMaxStamina());
+	//	SetShield(GetMaxShield());
+	//}
+
+	//// Simulated on proxies don't have their PlayerStates yet when BeginPlay is called so we call it again here
+	//InitializeFloatingStatusBar();
+}
+
+void APlayerBase::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+
+	SetupStartupPerspective();
+}
+
 void APlayerBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -159,10 +216,10 @@ void APlayerBase::PossessedBy(AController* NewController)
 		.AddUObject(this, &APlayerBase::WeaponChangingDelayReplicationTagChanged);
 
 	PlayerController = Cast<AActionPlayerController>(GetController());
-	/*if (PlayerController)
+	if (PlayerController)
 	{
-		PC->CreateHUD();
-	}*/
+		PlayerController->CreateInteractionHUD();
+	}
 
 	//InitializeFloatingStatusBar();
 
@@ -193,20 +250,12 @@ void APlayerBase::FinishDying()
 		GM->PlayerDied(GetController());
 	}
 
-	RemoveCharacterAbilities();
-
-	if (IsValid(AbilitySystemComponent))
+	if (AbilitySystemComponent)
 	{
-		AbilitySystemComponent->CancelAllAbilities();
-
 		FGameplayTagContainer EffectTagsToRemove;
 		EffectTagsToRemove.AddTag(EffectRemoveOnDeathTag);
 		int32 NumEffectsRemoved = AbilitySystemComponent->RemoveActiveEffectsWithTags(EffectTagsToRemove);
-
-		AbilitySystemComponent->ApplyGameplayEffectToSelf(Cast<UGameplayEffect>(DeathEffect->GetDefaultObject()), 1.0f, AbilitySystemComponent->MakeEffectContext());
 	}
-
-	OnCharacterDied.Broadcast(this);
 
 	Super::FinishDying();
 }
@@ -693,68 +742,6 @@ void APlayerBase::SetPerspective(bool Is1PPerspective)
 	}
 }
 
-void APlayerBase::OnRep_PlayerState()
-{
-	Super::OnRep_PlayerState();
-
-	// Init ASC Actor Info for clients. Server will init its ASC when it possesses a new Actor.
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-
-	// Bind player input to the AbilitySystemComponent. Also called in SetupPlayerInputComponent because of a potential race condition.
-	//BindASCInput();
-
-	AbilitySystemComponent->AbilityFailedCallbacks.AddUObject(this, &APlayerBase::OnAbilityActivationFailed);
-
-	// If we handle players disconnecting and rejoining in the future, we'll have to change this so that posession from rejoining doesn't reset attributes.
-	// For now assume possession = spawn/respawn.
-	InitializeAttributes();
-
-	AActionPlayerController* PC = Cast<AActionPlayerController>(GetController());
-	if (PC)
-	{
-		//PC->CreateHUD();
-	}
-
-	if (CurrentWeapon)
-	{
-		// If current weapon repped before PlayerState, set tag on ASC
-		AbilitySystemComponent->AddLooseGameplayTag(CurrentWeaponTag);
-		// Update owning character and ASC just in case it repped before PlayerState
-		CurrentWeapon->SetOwningCharacter(this);
-
-		if (!PrimaryReserveAmmoChangedDelegateHandle.IsValid())
-		{
-			PrimaryReserveAmmoChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(CurrentWeapon->PrimaryAmmoType)).AddUObject(this, &APlayerBase::CurrentWeaponPrimaryReserveAmmoChanged);
-		}
-		if (!SecondaryReserveAmmoChangedDelegateHandle.IsValid())
-		{
-			SecondaryReserveAmmoChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(CurrentWeapon->SecondaryAmmoType)).AddUObject(this, &APlayerBase::CurrentWeaponSecondaryReserveAmmoChanged);
-		}
-	}
-
-	if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
-	{
-		//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SetHealth"));
-
-		// Set Health/Mana/Stamina/Shield to their max. This is only for *Respawn*. It will be set (replicated) by the
-		// Server, but we call it here just to be a little more responsive.
-		SetHealth(GetMaxHealth());
-		SetMana(GetMaxMana());
-		SetStamina(GetMaxStamina());
-		SetShield(GetMaxShield());
-	}
-
-	// Simulated on proxies don't have their PlayerStates yet when BeginPlay is called so we call it again here
-	//InitializeFloatingStatusBar();
-}
-
-void APlayerBase::OnRep_Controller()
-{
-	Super::OnRep_Controller();
-
-	SetupStartupPerspective();
-}
-
 void APlayerBase::SpawnDefaultInventory()
 {
 	if (GetLocalRole() < ROLE_Authority)
@@ -842,10 +829,10 @@ void APlayerBase::SetCurrentWeapon(AWeaponBase* NewWeapon, AWeaponBase* LastWeap
 		AActionPlayerController* PC = GetController<AActionPlayerController>();
 		if (PC && PC->IsLocalController())
 		{
-			PC->SetEquippedWeaponPrimaryIconFromSprite(CurrentWeapon->PrimaryIcon);
-			PC->SetEquippedWeaponStatusText(CurrentWeapon->StatusText);
-			PC->SetPrimaryClipAmmo(CurrentWeapon->GetPrimaryClipAmmo());
-			PC->SetPrimaryReserveAmmo(GetPrimaryReserveAmmo());
+			//PC->SetEquippedWeaponPrimaryIconFromSprite(CurrentWeapon->PrimaryIcon);
+			//PC->SetEquippedWeaponStatusText(CurrentWeapon->StatusText);
+			//PC->SetPrimaryClipAmmo(CurrentWeapon->GetPrimaryClipAmmo());
+			//PC->SetPrimaryReserveAmmo(GetPrimaryReserveAmmo());
 			//PC->SetHUDReticle(CurrentWeapon->GetPrimaryHUDReticleClass());
 		}
 
@@ -904,10 +891,10 @@ void APlayerBase::UnEquipCurrentWeapon()
 	AActionPlayerController* PC = GetController<AActionPlayerController>();
 	if (PC && PC->IsLocalController())
 	{
-		PC->SetEquippedWeaponPrimaryIconFromSprite(nullptr);
-		PC->SetEquippedWeaponStatusText(FText());
-		PC->SetPrimaryClipAmmo(0);
-		PC->SetPrimaryReserveAmmo(0);
+		//PC->SetEquippedWeaponPrimaryIconFromSprite(nullptr);
+		//PC->SetEquippedWeaponStatusText(FText());
+		//PC->SetPrimaryClipAmmo(0);
+		//PC->SetPrimaryReserveAmmo(0);
 		//PC->SetHUDReticle(nullptr);
 	}
 }
@@ -917,7 +904,7 @@ void APlayerBase::CurrentWeaponPrimaryClipAmmoChanged(int32 OldPrimaryClipAmmo, 
 	AActionPlayerController* PC = GetController<AActionPlayerController>();
 	if (PC && PC->IsLocalController())
 	{
-		PC->SetPrimaryClipAmmo(NewPrimaryClipAmmo);
+		//PC->SetPrimaryClipAmmo(NewPrimaryClipAmmo);
 	}
 }
 
@@ -926,7 +913,7 @@ void APlayerBase::CurrentWeaponSecondaryClipAmmoChanged(int32 OldSecondaryClipAm
 	AActionPlayerController* PC = GetController<AActionPlayerController>();
 	if (PC && PC->IsLocalController())
 	{
-		PC->SetSecondaryClipAmmo(NewSecondaryClipAmmo);
+		//PC->SetSecondaryClipAmmo(NewSecondaryClipAmmo);
 	}
 }
 
@@ -935,7 +922,7 @@ void APlayerBase::CurrentWeaponPrimaryReserveAmmoChanged(const FOnAttributeChang
 	AActionPlayerController* PC = GetController<AActionPlayerController>();
 	if (PC && PC->IsLocalController())
 	{
-		PC->SetPrimaryReserveAmmo(Data.NewValue);
+		//PC->SetPrimaryReserveAmmo(Data.NewValue);
 	}
 }
 
@@ -944,7 +931,7 @@ void APlayerBase::CurrentWeaponSecondaryReserveAmmoChanged(const FOnAttributeCha
 	AActionPlayerController* PC = GetController<AActionPlayerController>();
 	if (PC && PC->IsLocalController())
 	{
-		PC->SetSecondaryReserveAmmo(Data.NewValue);
+		//PC->SetSecondaryReserveAmmo(Data.NewValue);
 	}
 }
 
@@ -1138,6 +1125,54 @@ void APlayerBase::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		else
 		{
 			HUDPackage.CrosshairColor = FLinearColor::White;
+		}
+	}
+}
+
+void APlayerBase::ShowInteractionPrompt(float InteractionDuration)
+{
+	if (PlayerController != nullptr)
+	{
+		UInteractionHUD* HUD = PlayerController->GetInteractionHUD();
+		if (HUD)
+		{
+			HUD->ShowInteractionPrompt(InteractionDuration);
+		}
+	}
+}
+
+void APlayerBase::HideInteractionPrompt()
+{
+	if (PlayerController != nullptr)
+	{
+		UInteractionHUD* HUD = PlayerController->GetInteractionHUD();
+		if (HUD)
+		{
+			HUD->HideInteractionPrompt();
+		}
+	}
+}
+
+void APlayerBase::StartInteractionTimer(float InteractionDuration)
+{
+	if (PlayerController != nullptr)
+	{
+		UInteractionHUD* HUD = PlayerController->GetInteractionHUD();
+		if (HUD)
+		{
+			HUD->StartInteractionTimer(InteractionDuration);
+		}
+	}
+}
+
+void APlayerBase::StopInteractionTimer()
+{
+	if (PlayerController != nullptr)
+	{
+		UInteractionHUD* HUD = PlayerController->GetInteractionHUD();
+		if (HUD)
+		{
+			HUD->StopInteractionTimer();
 		}
 	}
 }

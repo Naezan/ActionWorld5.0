@@ -17,6 +17,11 @@ AMonsterBase::AMonsterBase()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 }
 
+void AMonsterBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+}
+
 void AMonsterBase::BeginPlay()
 {
 	Super::BeginPlay();

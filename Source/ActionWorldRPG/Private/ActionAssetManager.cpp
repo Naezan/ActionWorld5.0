@@ -7,7 +7,7 @@
 
 //const FPrimaryAssetType	UActionAssetManager::PotionItemType = TEXT("Potion");
 //const FPrimaryAssetType	UActionAssetManager::SkillItemType = TEXT("Skill");
-//const FPrimaryAssetType	UActionAssetManager::TokenItemType = TEXT("Token");
+const FPrimaryAssetType	UActionAssetManager::MiscItemType = TEXT("Miscellaneous");
 const FPrimaryAssetType	UActionAssetManager::WeaponItemType = TEXT("Weapon");
 
 UActionAssetManager& UActionAssetManager::Get()
@@ -30,19 +30,4 @@ void UActionAssetManager::StartInitialLoading()
 	Super::StartInitialLoading();
 
 	UAbilitySystemGlobals::Get().InitGlobalData();
-}
-
-UActionItem* UActionAssetManager::ForceLoadItem(const FPrimaryAssetId& PrimaryAssetId, bool bLogWarning)
-{
-	FSoftObjectPath ItemPath = GetPrimaryAssetPath(PrimaryAssetId);
-
-	// This does a synchronous load and may hitch
-	UActionItem* LoadedItem = Cast<UActionItem>(ItemPath.TryLoad());
-
-	if (bLogWarning && LoadedItem == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to load item for identifier %s!"), *PrimaryAssetId.ToString());
-	}
-
-	return LoadedItem;
 }

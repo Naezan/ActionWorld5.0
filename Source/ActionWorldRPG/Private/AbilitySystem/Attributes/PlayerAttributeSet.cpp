@@ -121,21 +121,24 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 				//UE_LOG(LogTemp, Warning, TEXT("%s() %s is NOT alive when receiving damage"), *FString(__FUNCTION__), *TargetCharacter->GetName());
 			}
 
-			// Apply the damage to shield first if it exists
-			const float OldShield = GetShield();
-			float DamageAfterShield = LocalDamageDone - OldShield;
-			if (OldShield > 0)
-			{
-				float NewShield = OldShield - LocalDamageDone;
-				SetShield(FMath::Clamp<float>(NewShield, 0.0f, GetMaxShield()));
-			}
+			const float NewHealth = GetHealth() - LocalDamageDone;
+			SetHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
 
-			if (DamageAfterShield > 0)
-			{
-				// Apply the health change and then clamp it
-				const float NewHealth = GetHealth() - DamageAfterShield;
-				SetHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
-			}
+			//// Apply the damage to shield first if it exists
+			//const float OldShield = GetShield();
+			//float DamageAfterShield = LocalDamageDone - OldShield;
+			//if (OldShield > 0)
+			//{
+			//	float NewShield = OldShield - LocalDamageDone;
+			//	SetShield(FMath::Clamp<float>(NewShield, 0.0f, GetMaxShield()));
+			//}
+
+			//if (DamageAfterShield > 0)
+			//{
+			//	// Apply the health change and then clamp it
+			//	const float NewHealth = GetHealth() - DamageAfterShield;
+			//	SetHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
+			//}
 
 			if (TargetCharacter && WasAlive)
 			{
@@ -187,10 +190,31 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 				}
 			}
 		}
+
+		//만약 체력이 0보다 작거나 같다면
+		if (GetHealth() <= 0.f && !bZeroHealth)
+		{
+			if (OnZeroHealth.IsBound())
+			{
+				const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
+				AActor* Instigator = EffectContext.GetOriginalInstigator();
+
+				//누구에게 전달하는지에 대한정보가 필요할까?
+				OnZeroHealth.Broadcast(Instigator, Data.EffectSpec, Data.EvaluatedData.Magnitude);
+			}
+		}
+
+		bZeroHealth = (GetHealth() <= 0.f);
+
+		if (bZeroHealth && GetHealth() > 0.f)
+		{
+			bZeroHealth = false;
+		}
+
 	}// Damage
 	else if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		// Handle other health changes.
+		// 데미지로 체력이 바뀌는게 아닌 다른방식으로 체력이 바뀔때
 		// Health loss should go through Damage.
 		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
 	} // Health

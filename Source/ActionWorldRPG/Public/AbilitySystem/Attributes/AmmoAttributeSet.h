@@ -49,6 +49,14 @@ public:
 		FGameplayAttributeData MaxShotgunReserveAmmo;
 	ATTRIBUTE_ACCESSORS(UAmmoAttributeSet, MaxShotgunReserveAmmo)
 
+		UPROPERTY(BlueprintReadOnly, Category = "Ammo", ReplicatedUsing = OnRep_PistolReserveAmmo)
+		FGameplayAttributeData PistolReserveAmmo;
+	ATTRIBUTE_ACCESSORS(UAmmoAttributeSet, PistolReserveAmmo)
+
+		UPROPERTY(BlueprintReadOnly, Category = "Ammo", ReplicatedUsing = OnRep_MaxPistolReserveAmmo)
+		FGameplayAttributeData MaxPistolReserveAmmo;
+	ATTRIBUTE_ACCESSORS(UAmmoAttributeSet, MaxPistolReserveAmmo)
+
 		virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -61,6 +69,7 @@ protected:
 	FGameplayTag RifleAmmoTag;
 	FGameplayTag RocketAmmoTag;
 	FGameplayTag ShotgunAmmoTag;
+	FGameplayTag PistolAmmoTag;
 
 	// Helper function to proportionally adjust the value of an attribute when it's associated max attribute changes.
 	// (i.e. When MaxHealth increases, Health increases by an amount that maintains the same percentage as before)
@@ -87,5 +96,11 @@ protected:
 
 	UFUNCTION()
 		virtual void OnRep_MaxShotgunReserveAmmo(const FGameplayAttributeData& OldMaxShotgunReserveAmmo);
+
+	UFUNCTION()
+		virtual void OnRep_PistolReserveAmmo(const FGameplayAttributeData& OldPistolReserveAmmo);
+
+	UFUNCTION()
+		virtual void OnRep_MaxPistolReserveAmmo(const FGameplayAttributeData& OldMaxPistolReserveAmmo);
 
 };

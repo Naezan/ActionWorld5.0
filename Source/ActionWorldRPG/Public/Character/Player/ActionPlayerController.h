@@ -8,6 +8,7 @@
 #include "ActionPlayerController.generated.h"
 
 class AActionCharacterBase;
+class UInteractionHUD;
 class UPaperSprite;
 
 /**
@@ -21,6 +22,9 @@ class ACTIONWORLDRPG_API AActionPlayerController : public AModularPlayerControll
 public:
 	//Begin AActor
 	virtual void PreInitializeComponents() override;
+	// Server only
+	virtual void OnRep_PlayerState() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	//End AActor
 
@@ -29,23 +33,27 @@ public:
 	//End APlayerController
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "UI")
-		void SetEquippedWeaponPrimaryIconFromSprite(UPaperSprite* InSprite);
+	void CreateInteractionHUD();
 
-	UFUNCTION(BlueprintCallable, Category = "UI")
-		void SetEquippedWeaponStatusText(const FText& StatusText);
+	UInteractionHUD* GetInteractionHUD();
 
-	UFUNCTION(BlueprintCallable, Category = "UI")
-		void SetPrimaryClipAmmo(int32 ClipAmmo);
+	//UFUNCTION(BlueprintCallable, Category = "UI")
+	//	void SetEquippedWeaponPrimaryIconFromSprite(UPaperSprite* InSprite);
 
-	UFUNCTION(BlueprintCallable, Category = "UI")
-		void SetPrimaryReserveAmmo(int32 ReserveAmmo);
+	//UFUNCTION(BlueprintCallable, Category = "UI")
+	//	void SetEquippedWeaponStatusText(const FText& StatusText);
 
-	UFUNCTION(BlueprintCallable, Category = "UI")
-		void SetSecondaryClipAmmo(int32 SecondaryClipAmmo);
+	UFUNCTION(BlueprintPure, Category = "UI")
+		int32 GetPrimaryClipAmmo();
 
-	UFUNCTION(BlueprintCallable, Category = "UI")
-		void SetSecondaryReserveAmmo(int32 SecondaryReserveAmmo);
+	UFUNCTION(BlueprintPure, Category = "UI")
+		int32 GetPrimaryReserveAmmo();
+
+	UFUNCTION(BlueprintPure, Category = "UI")
+		int32 GetSecondaryClipAmmo();
+
+	UFUNCTION(BlueprintPure, Category = "UI")
+		int32 GetSecondaryReserveAmmo();
 
 	//UFUNCTION(BlueprintCallable, Category = "UI")
 	//	void SetHUDReticle(TSubclassOf<class UGSHUDReticle> ReticleClass);
@@ -66,11 +74,7 @@ public:
 	void ClientSetControlRotation_Implementation(FRotator NewRotation);
 	bool ClientSetControlRotation_Validate(FRotator NewRotation);
 
-	// Server only
-	virtual void OnPossess(APawn* InPawn) override;
-
-	virtual void OnRep_PlayerState() override;
-
+protected:
 	UFUNCTION(Exec)
 		void Kill();
 
@@ -78,7 +82,15 @@ public:
 		void ServerKill();
 	void ServerKill_Implementation();
 	bool ServerKill_Validate();
+
+protected:
 	//플레이어 관련 위젯
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "UI")
+		TSubclassOf<UInteractionHUD> InteractionWidgetClass;
+
+		//C++로 생성합니다 BP에서 생성할 수 없습니다
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+		UInteractionHUD* InteractionWidget;
 
 	//플레이어 컨트롤러는 스테이트정보를 기본적으로 가지고 있다
 

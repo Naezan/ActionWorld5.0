@@ -32,6 +32,19 @@ bool UActionAbilitySystemComponent::GetShouldTick() const
 	return Super::GetShouldTick();
 }
 
+void UActionAbilitySystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	if (IsOwnerActorAuthoritative())
+	{
+		for (FGameplayAbilityLocalAnimMontageForMesh& MontageInfo : LocalAnimMontageInfoForMeshes)
+		{
+			AnimMontage_UpdateReplicatedDataForMesh(MontageInfo.Mesh);
+		}
+	}
+
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
 void UActionAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor)
 {
 	Super::InitAbilityActorInfo(InOwnerActor, InAvatarActor);
@@ -51,19 +64,6 @@ void UActionAbilitySystemComponent::NotifyAbilityEnded(FGameplayAbilitySpecHandl
 
 	// If AnimatingAbility ended, clear the pointer
 	ClearAnimatingAbilityForAllMeshes(Ability);
-}
-
-void UActionAbilitySystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	if (IsOwnerActorAuthoritative())
-	{
-		for (FGameplayAbilityLocalAnimMontageForMesh& MontageInfo : LocalAnimMontageInfoForMeshes)
-		{
-			AnimMontage_UpdateReplicatedDataForMesh(MontageInfo.Mesh);
-		}
-	}
-
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 UActionAbilitySystemComponent* UActionAbilitySystemComponent::GetAbilitySystemComponentFromActor(const AActor* Actor, bool LookForComponent)

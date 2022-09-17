@@ -14,9 +14,9 @@
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-/**
- *
- */
+	// Delegate used to broadcast attribute events.
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FAttributeEventDelegate, AActor* /*EffectInstigator*/, const FGameplayEffectSpec& /*EffectSpec*/, float /*EffectMagnitude*/);
+
 UCLASS()
 class ACTIONWORLDRPG_API UPlayerAttributeSet : public UAttributeSet
 {
@@ -133,8 +133,13 @@ public:
 		FGameplayAttributeData GoldBounty;
 	ATTRIBUTE_ACCESSORS(UPlayerAttributeSet, GoldBounty)
 
+	/*mutable*/ FAttributeEventDelegate OnZeroHealth;
+
 protected:
 	FGameplayTag HeadShotTag;
+
+	//체력이 0인지 아닌지 확인
+	bool bZeroHealth;
 
 	// Helper function to proportionally adjust the value of an attribute when it's associated max attribute changes.
 	// (i.e. When MaxHealth increases, Health increases by an amount that maintains the same percentage as before)

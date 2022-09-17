@@ -71,6 +71,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// Client only
+	virtual void OnRep_PlayerState() override;
+	virtual void OnRep_Controller() override;
+
 	// Only called on the Server. Calls before Server's AcknowledgePossession.
 	virtual void PossessedBy(AController* NewController) override;
 
@@ -228,10 +232,6 @@ protected:
 	// Sets the perspective
 	void SetPerspective(bool Is1PPerspective);
 
-	// Client only
-	virtual void OnRep_PlayerState() override;
-	virtual void OnRep_Controller() override;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Character")
 		FVector StartingThirdPersonMeshLocation;
 
@@ -287,9 +287,6 @@ protected:
 	//무기
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
 		AWeaponBase* CurrentWeapon;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Character")
-		TSubclassOf<UGameplayEffect> DeathEffect;
 
 	// Cache tags
 	FGameplayTag NoWeaponTag;
@@ -368,6 +365,19 @@ protected:
 	*/
 	void SetHUDCrosshairs(float DeltaTime);
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
+	//상호작용 UI띄우기
+	UFUNCTION(BlueprintCallable)
+		void ShowInteractionPrompt(float InteractionDuration);
+	//상호작용 UI숨기기
+	UFUNCTION(BlueprintCallable)
+		void HideInteractionPrompt();
+	//상호작용 프레스UI시작하기
+	UFUNCTION(BlueprintCallable)
+		void StartInteractionTimer(float InteractionDuration);
+
+	// //상호작용 프레스UI멈추거나 막기
+	UFUNCTION(BlueprintCallable)
+		void StopInteractionTimer();
 
 	/*
 	* ZoomFOV Aiming

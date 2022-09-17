@@ -23,11 +23,20 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY()
-	class UItemCollectorComponent* ItemCollectorComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+		UStaticMeshComponent* ItemMesh;
 
-	UPROPERTY()
-	AActor* FollowTarget;
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
+		USphereComponent* SphereComponent;
+
+	UPROPERTY(BlueprintReadWrite)
+		class UItemCollectorComponent* ItemCollectorComponent;
+
+	UPROPERTY(BlueprintReadWrite)
+		AActor* FollowTarget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+		class UInventoryItem* CollectItemInfo;
 
 public:
 	UFUNCTION()
@@ -48,24 +57,24 @@ public:
 			int32 OtherBodyIndex
 		) override;
 
-		UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent)
 		void FinishCollect();
 
 public:
 	//타임라인
 	UPROPERTY()
-	UTimelineComponent* FollowTargetTimeline;
+		UTimelineComponent* FollowTargetTimeline;
 	UPROPERTY(EditAnywhere, Category = "Timeline")
-	UCurveFloat* FollowTargetCurveFloat;
+		UCurveFloat* FollowTargetCurveFloat;
 
 	FOnTimelineFloat FollowTargetFunction;
 	FOnTimelineEvent FollowTargetFinishEvent;
 
 	UFUNCTION()
-	void InitFollowTargetTimeline();
+		void InitFollowTargetTimeline();
 
 	UFUNCTION()
-	void OnMoveToTarget(float DeltaTime);
+		void OnMoveToTarget(float DeltaTime);
 	UFUNCTION()
-	void OnMoveFinished();
+		void OnMoveFinished();
 };

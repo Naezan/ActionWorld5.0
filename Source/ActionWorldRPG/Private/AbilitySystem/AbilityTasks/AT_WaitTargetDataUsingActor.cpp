@@ -28,6 +28,7 @@ void UAT_WaitTargetDataUsingActor::Activate()
 
 	if (Ability && TargetActor)
 	{
+		//맨처음 이부분이 호출되야 하지만 호출되지 않아서 에러가뜬다
 		InitializeTargetActor();
 		RegisterTargetDataCallbacks();
 		FinalizeTargetActor();
@@ -205,7 +206,7 @@ void UAT_WaitTargetDataUsingActor::FinalizeTargetActor() const
 
 void UAT_WaitTargetDataUsingActor::RegisterTargetDataCallbacks()
 {
-	if (!ensure(!IsValid(this)))
+	if (!IsValid(this))//여기서 에러남
 	{
 		return;
 	}

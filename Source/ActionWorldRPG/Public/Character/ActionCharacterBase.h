@@ -18,6 +18,10 @@
 #include "ActionCharacterBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCharacterDiedDelegate, AActionCharacterBase*, Character);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FHealthAttributeChanged, AActionCharacterBase*, AttributeOwner, float, OldValue, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FManaAttributeChanged, AActionCharacterBase*, AttributeOwner, float, OldValue, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRifleAmmoAttributeChanged, AActionCharacterBase*, AttributeOwner, float, OldValue, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FPistolAmmoAttributeChanged, AActionCharacterBase*, AttributeOwner, float, OldValue, float, NewValue);
 
 //어빌리티
 class UAbilitySystemComponent;
@@ -52,11 +56,11 @@ public:
 	// Sets default values for this character's properties
 	AActionCharacterBase();
 
+	virtual void PreInitializeComponents() override;
+	virtual void PostInitializeComponents() override;
+
 	// Friended to allow access to handle functions above
 	friend UPlayerAttributeSet;
-
-	UPROPERTY(BlueprintAssignable, Category = "Character")
-		FCharacterDiedDelegate OnCharacterDied;
 
 protected:
 	// Called when the game starts or when spawned
@@ -64,6 +68,12 @@ protected:
 
 	// Only called on the Server. Calls before Server's AcknowledgePossession.
 	virtual void PossessedBy(AController* NewController) override;
+
+	// Client only
+	virtual void OnRep_PlayerState() override;
+	virtual void OnRep_Controller() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Character")
@@ -75,9 +85,9 @@ public:
 
 	class UAmmoAttributeSet* GetAmmoAttributeSet() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Character")
-		virtual bool IsAlive() const;
-
+	//===========================
+	// Ability
+	//===========================
 	// Switch on AbilityID to return individual ability levels.
 	UFUNCTION(BlueprintCallable, Category = "Character")
 		virtual int32 GetAbilityLevel(EActionAbilityInputID AbilityID) const;
@@ -85,24 +95,23 @@ public:
 	// Removes all CharacterAbilities. Can only be called by the Server. Removing on the Server will remove from Client too.
 	virtual void RemoveCharacterAbilities();
 
-	UFUNCTION()
-		virtual void Die();
-
-	//BlueprintImplementableEvent함수는 가상일 수 없다
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "Die"))
-		void K2_Die();
-
-	UFUNCTION(BlueprintCallable, Category = "Character")
-		virtual void FinishDying();
-
-	virtual void AddDamageNumber(float Damage, FGameplayTagContainer DamageNumberTags);
-
-	//===========================
-	// Ability
-	//===========================
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		bool ActivateAbilityWithTags(FGameplayTagContainer AbilityTags, bool bAllowRemoteActivation = true);
 
+	//===========================
+	// Death
+	//===========================
+	UFUNCTION(BlueprintCallable, Category = "Character")
+		virtual bool IsAlive() const;
+
+	virtual void StartDeath();
+	virtual void FinishDeath();
+	
+	//===========================
+	// UI
+	//===========================
+	virtual void ShowDamageNumber();
+	virtual void AddDamageNumber(float Damage, FGameplayTagContainer DamageNumberTags);
 
 	//===========================
 	// Get Attributes
@@ -143,6 +152,72 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 		virtual float GetMoveSpeedBaseValue() const;
 
+public:
+	//===========================
+	// Delegate
+	//===========================
+
+	//블루프린트용
+	UPROPERTY(BlueprintAssignable)
+		FCharacterDiedDelegate OnDeathStarted;
+	UPROPERTY(BlueprintAssignable)
+		FCharacterDiedDelegate OnDeathFinished;
+
+	UPROPERTY(BlueprintAssignable)
+		FHealthAttributeChanged OnHealthChanged;
+	UPROPERTY(BlueprintAssignable)
+		FManaAttributeChanged OnManaChanged;
+	UPROPERTY(BlueprintAssignable)
+		FRifleAmmoAttributeChanged OnRifleAmmoChanged;
+	UPROPERTY(BlueprintAssignable)
+		FPistolAmmoAttributeChanged OnPistolAmmoChanged;
+
+protected:
+	UFUNCTION()
+		virtual void OnInitializeAbilitySystem();
+	UFUNCTION()
+		virtual void UnitializeAbilitySystem();
+
+	// Grant abilities on the Server. The Ability Specs will be replicated to the owning client.
+	virtual void AddCharacterAbilities();
+
+	// Initialize the Character's attributes. Must run on Server but we run it on Client too
+	// so that we don't have to wait. The Server's replication to the Client won't matter since
+	// the values should be the same.
+	virtual void InitializeAttributes();
+
+	virtual void AddStartupEffects();
+
+	virtual void HandleZeroHealth(AActor* Instigator, const FGameplayEffectSpec& DamageEffectSpec, float DamageAmount);
+	virtual void HandleHealthChanged(const FOnAttributeChangeData& ChangeData);
+	virtual void HandleManaChanged(const FOnAttributeChangeData& ChangeData);
+	virtual void HandleRifleReserveAmmoChanged(const FOnAttributeChangeData& ChangeData);
+	virtual void HandlePistolReserveAmmoChanged(const FOnAttributeChangeData& ChangeData);
+
+	virtual void SetHealth(float Health);
+	virtual void SetMana(float Mana);
+	virtual void SetStamina(float Stamina);
+	virtual void SetShield(float Shield);
+
+	void DisableMovementAndCollision();
+	void PlayDeathAnimationAndSound();
+	/*
+	* 차후에 다른방식으로써야한다 그냥렉돌만작동하는 몬스터가 있을수도있고 애니메이션이적영된후에 렉돌이 작동할 수도 있다.
+	*/
+	UFUNCTION(BlueprintCallable)
+	void Ragdoll();
+	void ApplyPhysics();
+	void HideEquippedWeapon();
+	void OnDestroyFinished();
+	void DestroyWhenFinishDeath();
+	virtual void FinishDying();
+
+	//블루프린트용
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnDestroyStarted"))
+		void K2_OnDestroyStarted();
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnDestroyFinished"))
+		void K2_OnDestroyFinished();
+
 protected:
 	FGameplayTag DeadTag;
 	FGameplayTag EffectRemoveOnDeathTag;
@@ -173,10 +248,19 @@ protected:
 
 	// Death Animation
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")
-		UAnimMontage* DeathMontage;
+		TArray<UAnimMontage*> DeathMontage;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Audio")
 		class USoundCue* DeathSound;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ragdoll")
+		FName RagdollProfileName;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ragdoll")
+		FName RagdollImpulseBone;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ragdoll")
+		float RadgollImpulsePower;
 
 	// Default abilities for this Character. These will be removed on Character death and regiven if Character respawns.
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
@@ -191,25 +275,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
 		TArray<TSubclassOf<UGameplayEffect>> StartupEffects;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Abilities")
+		TSubclassOf<UGameplayEffect> DeathEffect;
+
 	//UPROPERTY(EditAnywhere, Category = "UI")
 	//	TSubclassOf<class UGSDamageTextWidgetComponent> DamageNumberClass;
 
-	// Grant abilities on the Server. The Ability Specs will be replicated to the owning client.
-	virtual void AddCharacterAbilities();
-
-	// Initialize the Character's attributes. Must run on Server but we run it on Client too
-	// so that we don't have to wait. The Server's replication to the Client won't matter since
-	// the values should be the same.
-	virtual void InitializeAttributes();
-
-	virtual void AddStartupEffects();
-
-	virtual void ShowDamageNumber();
-
-	virtual void SetHealth(float Health);
-	virtual void SetMana(float Mana);
-	virtual void SetStamina(float Stamina);
-	virtual void SetShield(float Shield);
 
 	//TeamID
 public:

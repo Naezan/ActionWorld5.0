@@ -62,14 +62,9 @@ struct FEquipItemContainer
 		: EquipItemIndex(-1)
 	{}
 
-	FEquipItemContainer(const FPrimaryAssetType& InItemType, int32 InEquipItemIndex)
-		: ItemType(InItemType)
-		, EquipItemIndex(InEquipItemIndex)
+	FEquipItemContainer(int32 InEquipItemIndex)
+		: EquipItemIndex(InEquipItemIndex)
 	{}
-
-	//데이터 에셋정보
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Item)
-		FPrimaryAssetType ItemType;
 
 	//주무기 보조무기 근접무기
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Item)
@@ -77,7 +72,7 @@ struct FEquipItemContainer
 
 	bool operator==(const FEquipItemContainer& Data) const
 	{
-		return ItemType == Data.ItemType && EquipItemIndex == Data.EquipItemIndex;
+		return EquipItemIndex == Data.EquipItemIndex;
 	}
 
 	bool operator!=(const FEquipItemContainer& Data) const
@@ -89,14 +84,13 @@ struct FEquipItemContainer
 	{
 		uint32 Hash = 0;
 
-		Hash = HashCombine(Hash, GetTypeHash(Key.ItemType));
 		Hash = HashCombine(Hash, (uint32)Key.EquipItemIndex);
 		return Hash;
 	}
 
 	bool IsValid() const
 	{
-		return ItemType.IsValid() && EquipItemIndex >= 0;
+		return EquipItemIndex >= 0;
 	}
 };
 
@@ -116,7 +110,7 @@ class UInventoryManagerComponent : public UActorComponent, public IInventoryInte
 
 public:
 	// Sets default values for this component's properties
-	UInventoryManagerComponent() {}
+	UInventoryManagerComponent();
 
 	virtual void BeginPlay() override;
 
@@ -129,14 +123,17 @@ public:
 		TMap<FEquipItemContainer, UInventoryItem*> EquippedItems;
 
 	//Begin 인벤토리 델리게이트
+	//인벤토리아이템용
 	UPROPERTY(BlueprintAssignable, Category = Inventory)
 		FOnInventoryItemChanged OnInventoryItemChanged;
 	FOnInventoryItemChangedNative OnInventoryItemChangedNative;
 
+	//장비업데이트용
 	UPROPERTY(BlueprintAssignable, Category = Inventory)
 		FOnEquippedItemChanged OnEquippedItemChanged;
 	FOnEquippedItemChangedNative OnEquippedItemChangedNative;
 
+	//게임 로드용
 	UPROPERTY(BlueprintAssignable, Category = Inventory)
 		FOnInventoryLoaded OnInventoryLoaded;
 	FOnInventoryLoadedNative OnInventoryLoadedNative;
@@ -180,7 +177,7 @@ public:
 
 	//데이터 타입에 맞는 장착하고 있는 모든 장비를 가져옵니다.
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void GetAllEquippedItems(TArray<UInventoryItem*>& /*out*/ Items, FPrimaryAssetType ItemType);
+		void GetAllEquippedItems(TArray<UInventoryItem*>& /*out*/ Items);
 
 	//아무의미없이 비어있는 슬롯에 인벤토리의 아이템을 순서대로 채워넣습니다.
 	UFUNCTION(BlueprintCallable, Category = Inventory)
@@ -217,5 +214,6 @@ protected:
 	//Inventory Delegate Bind Function
 	void NotifyInventoryItemChanged(bool bAdded, UInventoryItem* Item);
 	void NotifyEquippedItemChanged(FEquipItemContainer ItemType, UInventoryItem* Item);
+	//게임로드할때 인벤토리 로드용
 	void NotifyInventoryChanged();
 };

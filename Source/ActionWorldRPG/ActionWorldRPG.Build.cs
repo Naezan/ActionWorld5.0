@@ -9,7 +9,7 @@ public class ActionWorldRPG : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "Core", "CoreUObject", "Engine", "InputCore",
+            "Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem",
             "GameplayAbilities", "GameplayTasks", "GameplayTags",
             "UMG", "Paper2D", "EnhancedInput", "PhysicsCore", "AIModule",
             "ModularGameplay", "GameFeatures",
