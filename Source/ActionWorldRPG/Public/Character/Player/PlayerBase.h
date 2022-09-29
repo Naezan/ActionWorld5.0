@@ -61,7 +61,7 @@ class ACTIONWORLDRPG_API APlayerBase : public AActionCharacterBase, public IInte
 	GENERATED_BODY()
 
 public:
-	APlayerBase();
+	APlayerBase(const FObjectInitializer& ObjectInitializer);
 
 	//어빌리티 관련프로퍼티
 	FGameplayTag CurrentWeaponTag;
@@ -153,6 +153,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Footstep")
 		EPhysicalSurface GetSurfaceType();
 
+	//Climb
+	UFUNCTION(BlueprintPure)
+		FORCEINLINE class UCustomCharacterMovementComponent* GetCustomCharacterMovement() const { return MovementComponent; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -180,6 +184,21 @@ protected:
 	void HandleEmoteActionReleased();
 	void HandleInteractActionPressed();
 	void HandleInteractActionReleased();
+	void HandleSlidingActionPressed();
+	void HandleSlidingActionReleased();
+
+	//ClimbInput Begin
+	UFUNCTION(BlueprintCallable)
+		void Climb();
+	UFUNCTION(BlueprintCallable)
+		void CancelClimb();
+	//일밙거으로 위아래로 움직일 수 없습니다.
+	UFUNCTION(BlueprintCallable)
+		void ClimbMoveForward(float Value);
+	//좌우로 움직이이는데 한계가 존재합니다.
+	UFUNCTION(BlueprintCallable)
+		void ClimbMoveRight(float Value);
+	//ClimbInput End
 
 	void CallGenericConfirm();
 	void CallGenericCancel();
@@ -222,26 +241,45 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
 		TObjectPtr<UInputAction> InteractAction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input Actions")
+		TObjectPtr<UInputAction> SlidingAction;
+
 	//=============================
 
+	//카메라
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Camera")
+		USpringArmComponent* CameraSpringArmComp;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Camera")
+		UCameraComponent* CameraComp;
 
+	//모션워핑
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "MotionWarp")
+		class UMotionWarpingComponent* MotionWarpingComp;
 
-	// Toggles between perspectives
-	void TogglePerspective();
+	//컨트롤러
+	class AActionPlayerController* PlayerController;
 
-	// Sets the perspective
-	void SetPerspective(bool Is1PPerspective);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+		class UCustomCharacterMovementComponent* MovementComponent;
 
+	//무기
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
+		AWeaponBase* CurrentWeapon;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character")
+		FName WeaponAttachPoint;
+
+	//시점변환
 	UPROPERTY(BlueprintReadOnly, Category = "Character")
 		FVector StartingThirdPersonMeshLocation;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-		bool bIsFirstPersonPerspective;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character")
 		bool bIsAiming = false;
 	UPROPERTY(BlueprintReadWrite, Category = "Character")
 		bool bIsReloading = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Camera")
+		bool bIsFirstPersonPerspective;
 
 	// Set to true when we change the weapon predictively and flip it to false when the Server replicates to confirm.
 	// We use this if the Server refused a weapon change ability's activation to ask the Server to sync the client back up
@@ -250,28 +288,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 		float Default3PFOV;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character")
-		FName WeaponAttachPoint;
-
-	//컨트롤러
-	class AActionPlayerController* PlayerController;
-
-	//HUD
-	class APlayerHUD* PlayerHUD;
-	FHUDPackage HUDPackage;
-	FVector HitTarget;
-
-	float CrosshairVelocityFactor; //뛰거나 걸을때
-	float CrosshairInAirFactor; //공중에 있을때
-	float CrosshairAimFactor; //에임동작일때
-	float CrosshairShootingFactor; //총을 쏠때
-
-	//카메라
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Camera")
-		USpringArmComponent* CameraSpringArmComp;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Camera")
-		UCameraComponent* CameraComp;
 
 	//인벤토리
 	UPROPERTY(ReplicatedUsing = OnRep_Inventory)
@@ -284,9 +300,26 @@ protected:
 	UPROPERTY()
 		TScriptInterface<IInventoryInterface> InventorySource;
 
-	//무기
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
-		AWeaponBase* CurrentWeapon;
+	//HUD
+	class APlayerHUD* PlayerHUD;
+	FHUDPackage HUDPackage;
+	FVector HitTarget;
+	float CrosshairVelocityFactor; //뛰거나 걸을때
+	float CrosshairInAirFactor; //공중에 있을때
+	float CrosshairAimFactor; //에임동작일때
+	float CrosshairShootingFactor; //총을 쏠때
+
+	//모션워핑
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "MotionWarping")
+		FRotator WarpRotation;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "MotionWarping")
+		FVector WarpStartPoint;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "MotionWarping")
+		FVector WarpEdgePoint;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "MotionWarping")
+		FVector WarpLandPoint;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "MotionWarping")
+		FVector WarpEndPoint;
 
 	// Cache tags
 	FGameplayTag NoWeaponTag;
@@ -306,6 +339,12 @@ protected:
 	//Inventory delegate handles
 	FDelegateHandle InventoryUpdateHandle;
 	FDelegateHandle InventoryLoadedHandle;
+
+	// Toggles between perspectives
+	void TogglePerspective();
+
+	// Sets the perspective
+	void SetPerspective(bool Is1PPerspective);
 
 	// Server spawns default inventory
 	void SpawnDefaultInventory();
@@ -359,6 +398,13 @@ protected:
 		void ClientSyncCurrentWeapon(AWeaponBase* InWeapon);
 	void ClientSyncCurrentWeapon_Implementation(AWeaponBase* InWeapon);
 	bool ClientSyncCurrentWeapon_Validate(AWeaponBase* InWeapon);
+
+	UFUNCTION(BlueprintCallable)
+		bool CalculateWallOverPoint(FVector AnimRootStartPoint, int32 WarpStartForwardMul = 30, int32 WarpLandForwardMul = 200, int32 WarpEndForwardMul = 50);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+		void StartWallOver(bool bEnable);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+		void EndWallOver();
 
 	/*
 	* HUD

@@ -13,7 +13,8 @@ public class ActionWorldRPG : ModuleRules
             "GameplayAbilities", "GameplayTasks", "GameplayTags",
             "UMG", "Paper2D", "EnhancedInput", "PhysicsCore", "AIModule",
             "ModularGameplay", "GameFeatures",
-            "LoadingScreen"
+            "LoadingScreen",
+            "MotionWarping"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });

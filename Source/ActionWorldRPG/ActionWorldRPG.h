@@ -40,4 +40,6 @@ enum class EActionAbilityInputID : uint8
 	Interact			UMETA(DisplayName = "Interact"),
 	// 12 Emote
 	Emote				UMETA(DisplayName = "Emote"),
+	// 13 Sliding
+	Sliding				UMETA(DisplayName = "Sliding"),
 };

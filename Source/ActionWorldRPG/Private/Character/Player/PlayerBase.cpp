@@ -6,6 +6,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 //어빌리티
 #include "AbilitySystem/Attributes/AmmoAttributeSet.h"
@@ -35,7 +36,12 @@
 //UI
 #include "HUD/InteractionHUD.h"
 
-APlayerBase::APlayerBase()
+#include "MotionWarpingComponent.h"
+#include "Character/Player/CustomCharacterMovementComponent.h"
+
+APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCustomCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
+
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -60,6 +66,8 @@ APlayerBase::APlayerBase()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
 	CameraComp->SetupAttachment(CameraSpringArmComp);
 	CameraComp->bUsePawnControlRotation = false;
+
+	MotionWarpingComp = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
 
 	//캡슐컴포넌트
 	GetCapsuleComponent()->InitCapsuleSize(94.f, 42.f);
@@ -89,7 +97,9 @@ APlayerBase::APlayerBase()
 	BaseEyeHeight = 58.f;
 	bUseControllerRotationYaw = false;
 	bGenerateOverlapEventsDuringLevelStreaming = false;
-	
+
+	MovementComponent = Cast<UCustomCharacterMovementComponent>(GetCharacterMovement());
+
 	//SpawnCollisionHandlingMethod Always Spawn, Ignore Collisions
 }
 
@@ -149,6 +159,11 @@ void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		{
 			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerBase::HandleInteractActionPressed);
 			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &APlayerBase::HandleInteractActionReleased);
+		}
+		if (SlidingAction)
+		{
+			EnhancedInputComponent->BindAction(SlidingAction, ETriggerEvent::Triggered, this, &ThisClass::HandleSlidingActionPressed);
+			EnhancedInputComponent->BindAction(SlidingAction, ETriggerEvent::Completed, this, &ThisClass::HandleSlidingActionReleased);
 		}
 	}
 }
@@ -685,6 +700,64 @@ void APlayerBase::HandleInteractActionReleased()
 	SendLocalInputToASC(false, EActionAbilityInputID::Interact);
 }
 
+void APlayerBase::HandleSlidingActionPressed()
+{
+	SendLocalInputToASC(true, EActionAbilityInputID::Sliding);
+}
+
+void APlayerBase::HandleSlidingActionReleased()
+{
+	SendLocalInputToASC(false, EActionAbilityInputID::Sliding);
+}
+
+void APlayerBase::Climb()
+{
+	MovementComponent->TryClimbing();
+}
+
+void APlayerBase::CancelClimb()
+{
+	MovementComponent->CancelClimbing();
+}
+
+void APlayerBase::ClimbMoveForward(float Value)
+{
+	FVector Direction;
+	Direction = FVector::CrossProduct(MovementComponent->GetClimbSurfaceNormal(), -GetActorRightVector());
+
+	//캡슐로 위치를검사합니다? 그 위치에 잡을 수 있는 벽이 있다면? 스페이스바를 눌렀을때 이동합니다?
+	//대쉬랑 비슷
+	//AddMovementInput(Direction, Value);
+}
+
+void APlayerBase::ClimbMoveRight(float Value)
+{
+	FVector Direction;
+	Direction = FVector::CrossProduct(MovementComponent->GetClimbSurfaceNormal(), GetActorUpVector());
+
+	//이동할 수있는 지점이 없다면 움직이지 않습니다. 효율적일까?
+	FHitResult Result;
+	TArray<AActor*> IgnoreActor;
+	FVector Start = GetActorLocation() + GetActorUpVector() * 100 + Direction * Value * 35;
+	FVector End = Start + GetActorForwardVector() * 50;
+	bool bIsHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 10, TraceTypeQuery1,
+		false, IgnoreActor, EDrawDebugTrace::ForOneFrame, Result, true);
+
+	//짚을수 있는 지점이 있는지 확인합니다.
+	if (bIsHit)
+	{
+		FHitResult NewResult;
+		bool bIsNewHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Result.ImpactPoint + FVector(0, 0, 20), Result.ImpactPoint, 10, TraceTypeQuery1,
+			false, IgnoreActor, EDrawDebugTrace::ForOneFrame, NewResult, true);
+		
+		//짚을수 있는 지점이 있다면 이동합니다.
+		if (bIsNewHit)
+		{
+			AddMovementInput(Direction, Value);
+		}
+	}
+}
+
 void APlayerBase::CallGenericConfirm()
 {
 	SendLocalInputToASC(true, EActionAbilityInputID::Confirm);
@@ -1002,6 +1075,99 @@ bool APlayerBase::ClientSyncCurrentWeapon_Validate(AWeaponBase* InWeapon)
 	return true;
 }
 
+bool APlayerBase::CalculateWallOverPoint(FVector AnimRootStartPoint, int32 WarpStartForwardMul, int32 WarpLandForwardMul, int32 WarpEndForwardMul)
+{
+	bool bWarp = false;
+
+	//앞뱡향 1미터 전방에 물체가 있는지 탐지합니다
+	TArray<AActor*> ActorToIgnore;
+	FHitResult Result;
+	UKismetSystemLibrary::SphereTraceSingle(
+		this,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * 100,
+		10,
+		TraceTypeQuery1,
+		false,
+		ActorToIgnore,
+		EDrawDebugTrace::ForDuration,
+		Result,
+		true);
+
+	//넘을 수 있는 상자인지
+	if (Result.GetActor() != nullptr)
+	{
+		FVector Normal = Result.Normal;
+
+		WarpRotation = UKismetMathLibrary::Conv_VectorToRotator(Normal * -1);
+
+		//접촉된지점에서 앞뱡항으로 25씩 전진한다 총2.5미터의 간격을 검사한다
+		bool bOnce = false;
+		for (int i = 0; i < 10; ++i)
+		{
+			//위에서부터 아래로 검사하면서 충돌지점을 찾는다 1.5미터 위에서부터 검사한다
+			//최고높이 지점에 특정지점이있다면 넘을 수 없다
+			TArray<AActor*> NewActorToIgnore;
+			FHitResult NewResult;
+			UKismetSystemLibrary::SphereTraceSingle(
+				this,
+				Result.ImpactPoint + i * -25 * Normal + FVector(0, 0, 150),
+				Result.ImpactPoint + i * -25 * Normal,
+				10,
+				TraceTypeQuery1,
+				false,
+				NewActorToIgnore,
+				EDrawDebugTrace::ForDuration,
+				NewResult,
+				true);
+
+			if (NewResult.GetActor() != nullptr)
+			{
+				if (!bOnce)
+				{
+					bOnce = true;
+					//애니메이션의 Root가 되는 지점 //30
+					WarpStartPoint = NewResult.ImpactPoint + Normal * -WarpStartForwardMul + AnimRootStartPoint;
+				}
+
+				//충돌지점의 끝이 될 지점
+				WarpEdgePoint = NewResult.ImpactPoint;
+			}
+
+			//착지지점
+			if (i == 9)
+			{
+				TArray<AActor*> LandActorToIgnore;
+				FHitResult LandResult;
+				//맨끝충돌지점에서 아래로 3미터 검사한다 //200
+				UKismetSystemLibrary::SphereTraceSingle(
+					this,
+					WarpEdgePoint + Normal * -WarpLandForwardMul,
+					WarpEdgePoint + Normal * -WarpLandForwardMul + FVector(0, 0, -300),
+					10,
+					TraceTypeQuery1,
+					false,
+					LandActorToIgnore,
+					EDrawDebugTrace::ForDuration,
+					LandResult,
+					true);
+
+				if (LandResult.GetActor() != nullptr)
+				{
+					WarpLandPoint = LandResult.ImpactPoint;
+					bWarp = true;
+				}
+			}
+		}
+
+		//도작지점에서 약간더 //50
+		WarpEndPoint = WarpLandPoint + Normal * -WarpEndForwardMul;
+		return bWarp;
+	}
+
+	return bWarp;
+}
+
 void APlayerBase::SetHUDCrosshairs(float DeltaTime)
 {
 	if (PlayerController == nullptr)
@@ -1041,7 +1207,7 @@ void APlayerBase::SetHUDCrosshairs(float DeltaTime)
 		CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(
 			WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
 
-		if (GetCharacterMovement()->IsFalling())
+		if (MovementComponent->IsFalling())
 		{
 			CrosshairInAirFactor = FMath::FInterpTo(
 				CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);

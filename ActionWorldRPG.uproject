@@ -64,6 +64,10 @@
 		{
 			"Name": "BlackOutCore",
 			"Enabled": true
+		},
+		{
+			"Name": "MotionWarping",
+			"Enabled": true
 		}
 	]
 }

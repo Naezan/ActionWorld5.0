@@ -20,7 +20,7 @@ class ACTIONWORLDRPG_API AMonsterBase : public AActionCharacterBase, public IInt
 	GENERATED_BODY()
 
 public:
-	AMonsterBase();
+	AMonsterBase(const FObjectInitializer& ObjectInitializer);
 
 	virtual void PostInitializeComponents() override;
 

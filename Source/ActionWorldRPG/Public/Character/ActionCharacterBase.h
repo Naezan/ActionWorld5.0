@@ -54,7 +54,7 @@ class ACTIONWORLDRPG_API AActionCharacterBase : public ACharacter, public IAbili
 
 public:
 	// Sets default values for this character's properties
-	AActionCharacterBase();
+	AActionCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void PreInitializeComponents() override;
 	virtual void PostInitializeComponents() override;
