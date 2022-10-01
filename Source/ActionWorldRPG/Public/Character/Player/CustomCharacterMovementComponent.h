@@ -29,6 +29,7 @@ private:
 	virtual void OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity) override;
 	//캡슐의 크기조절기능이 들어있습니다.
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+	//virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
 
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
 	void PhysClimbing(float deltaTime, int32 Iterations);//
@@ -36,6 +37,9 @@ private:
 	virtual float GetMaxSpeed() const override;
 	virtual float GetMaxAcceleration() const override;
 public:
+	virtual bool IsCrouching() const override;
+	virtual bool IsFalling() const override;
+
 	void TryClimbing();
 
 	void CancelClimbing();
@@ -46,6 +50,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	FVector GetClimbSurfaceNormal() const;
 
+	FORCEINLINE bool GetIsJumpClimb() const { return IsJumpClimb; };
+
+	//처음 클라이밍상태라면 true 이후에는 모두 false입니다.
 	UPROPERTY(Category = "Climbing", EditAnywhere, BlueprintReadWrite)
 		bool bIsPlayClimbStart = true;
 
@@ -91,7 +98,8 @@ private:
 
 
 	//클라이밍 렛지
-	bool TryClimbUpLedge();
+	UFUNCTION(BlueprintCallable)
+	bool TryClimbUpLedge(float ForwardValue);
 	//착지가 가능한 Top부분에 장애물이 없는지 확인합니다. 장애물이 없으면 true를 반환합니다.
 	bool HasReachedEdge() const;
 	//지면이 걸을 수 있는지 확인합니다.
@@ -163,13 +171,24 @@ private:
 		float FloorCheckDistance = 100.f;
 
 	//LedgeAnimation
-	UPROPERTY(Category = "Climbing", EditDefaultsOnly)
+	UPROPERTY(Category = "Climbing", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* LedgeClimbMontage;
+
+	UPROPERTY(Category = "Climbing", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* JumpClimbFailMontage;
 
 	UPROPERTY()
 		UAnimInstance* AnimInstance;
 
+	UPROPERTY(Category = "Climbing", EditAnywhere, meta = (ClampMin = "1.0", ClampMax = "150"))
+		float LedgeClimbEyeShrinkAmount = 60.f;
+	UPROPERTY(Category = "Climbing", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+		bool IsLedgeClimbEnd;
+
 	//클라이밍 점프 모션워핑 변수
+	UPROPERTY(Category = "Climbing MotionWarping", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+		bool IsJumpClimb;
+
 	UPROPERTY(Category = "Climbing MotionWarping", BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector WarpJumpClimbingPoint;
 	UPROPERTY(Category = "Climbing MotionWarping", BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

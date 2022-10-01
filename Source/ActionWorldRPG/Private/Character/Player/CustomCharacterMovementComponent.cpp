@@ -152,6 +152,16 @@ float UCustomCharacterMovementComponent::GetMaxAcceleration() const
 	return IsClimbing() ? MaxClimbingAcceleration : Super::GetMaxAcceleration();
 }
 
+bool UCustomCharacterMovementComponent::IsCrouching() const
+{
+	return Super::IsCrouching();
+}
+
+bool UCustomCharacterMovementComponent::IsFalling() const
+{
+	return Super::IsFalling();
+}
+
 void UCustomCharacterMovementComponent::TryClimbing()
 {
 	if (CanStartClimbing())
@@ -250,13 +260,21 @@ bool UCustomCharacterMovementComponent::EyeHeightTrace(const float TraceDistance
 
 	//클라이밍 중이라면 캡슐의 EyeHeight가 줄어든 상태이기에 줄어든값만큼 더해줘야합니다.
 	const float BaseEyeHeight = GetCharacterOwner()->BaseEyeHeight;
-	const float EyeHeightOffset = IsClimbing() ? BaseEyeHeight + ClimbingCollisionShrinkAmount : BaseEyeHeight;
+	const float EyeHeightOffset = IsClimbing() ? BaseEyeHeight + LedgeClimbEyeShrinkAmount : BaseEyeHeight;
 
 	//눈높이에서 TraceDistance만큼 앞으로 검사
 	const FVector Start = UpdatedComponent->GetComponentLocation() +
 		(UpdatedComponent->GetUpVector() * EyeHeightOffset);
 	const FVector End = Start + (UpdatedComponent->GetForwardVector() * TraceDistance);
 
+	DrawDebugLine(
+		GetWorld(),
+		Start,
+		End,
+		FColor(255, 0, 0),
+		true, -1, 0,
+		2
+	);
 	return GetWorld()->LineTraceSingleByChannel(UpperEdgeHit, Start, End,
 		ECC_WorldStatic, ClimbQueryparams);
 }
@@ -284,8 +302,9 @@ void UCustomCharacterMovementComponent::ComputeSurfaceInfo()
 		return;
 	}
 
-	CurrentClimbingPosition = CurrentWallHit.ImpactPoint;
-	CurrentClimbingNormal = CurrentWallHit.Normal;
+	//
+	CurrentClimbingPosition = IsJumpClimb ? CurrentJumpClimbWallHit.ImpactPoint : CurrentWallHit.ImpactPoint;
+	CurrentClimbingNormal = IsJumpClimb ? CurrentJumpClimbWallHit.Normal : CurrentWallHit.Normal;
 
 	//위치의 평균값
 	//CurrentClimbingPosition /= CurrentWallHits.Num();
@@ -317,12 +336,20 @@ bool UCustomCharacterMovementComponent::ShouldStopClimbing()
 	const bool bIsOnCeiling = FVector::Parallel(CurrentClimbingNormal, FVector::UpVector);
 
 	//천장이거나 클라이밍벡터를계산하지 않았거나 오를수없는경우에는 클라이밍을 하지 못합니다.
+	//추가로 렛지중에는 클라이밍을 멈춥니다.
 	return !bWantToClimb || CurrentClimbingNormal.IsZero() || bIsOnCeiling;
 }
 
 void UCustomCharacterMovementComponent::StopClimbing(float deltaTime, int32 Iterations)
 {
 	bWantToClimb = false;
+	//렛지상태를 리셋합니다
+	//IsLedgeClimbEnd = false;
+	//점프 클라이밍 상태를 리셋합니다
+	IsJumpClimb = false;
+	//클라이밍 시작변수를 리셋합니다.
+	bIsPlayClimbStart = true;
+
 	//클라이밍을 취소하면 기본적으로 Falling상태가 됩니다.
 	SetMovementMode(EMovementMode::MOVE_Falling);
 	//피직스함수를 Falling으로 새롭게 호출합니다.
@@ -408,17 +435,15 @@ bool UCustomCharacterMovementComponent::CheckFloor(FHitResult& FloorHit) const
 	return GetWorld()->LineTraceSingleByChannel(FloorHit, Start, End, ECC_WorldStatic, ClimbQueryparams);
 }
 
-bool UCustomCharacterMovementComponent::TryClimbUpLedge()
+bool UCustomCharacterMovementComponent::TryClimbUpLedge(float ForwardValue)
 {
 	if (AnimInstance && LedgeClimbMontage && AnimInstance->Montage_IsPlaying(LedgeClimbMontage))
 	{
 		return false;
 	}
 
-	//속도값이 아닌 입력값 1인지 체크
-	// ??
-	const float UpSpeed = FVector::DotProduct(Velocity, UpdatedComponent->GetUpVector());
-	const bool bIsMovingUp = UpSpeed >= MaxClimbingSpeed / 3;
+	//입력값 1인지 체크
+	const bool bIsMovingUp = ForwardValue >= .9;
 
 	if (bIsMovingUp && HasReachedEdge() && CanMoveToLedgeClimbLocation())
 	{
@@ -426,7 +451,7 @@ bool UCustomCharacterMovementComponent::TryClimbUpLedge()
 		const FRotator StandRotation = FRotator(0, UpdatedComponent->GetComponentRotation().Yaw, 0);
 		UpdatedComponent->SetRelativeRotation(StandRotation);
 
-		AnimInstance->Montage_Play(LedgeClimbMontage);
+		//AnimInstance->Montage_Play(LedgeClimbMontage);
 
 		return true;
 	}
@@ -438,7 +463,7 @@ bool UCustomCharacterMovementComponent::HasReachedEdge() const
 {
 	//캡슐 반지름의 2.5배 즉 캡슐이 충분히 들어갈 자리가 있는지 확인합니다.
 	const UCapsuleComponent* Capsule = CharacterOwner->GetCapsuleComponent();
-	const float TraceDistance = Capsule->GetUnscaledCapsuleRadius() * 2.5f;
+	const float TraceDistance = Capsule->GetUnscaledCapsuleRadius() * 3.0f;
 
 	return !EyeHeightTrace(TraceDistance);
 }
@@ -447,6 +472,15 @@ bool UCustomCharacterMovementComponent::IsLocationWalkable(const FVector& CheckL
 {
 	//체크 거리에서 아래러 250만큼에 있는 바닥을 체크합니다
 	const FVector CheckEnd = CheckLocation + (FVector::DownVector * 250.f);
+
+	DrawDebugLine(
+		GetWorld(),
+		CheckLocation,
+		CheckEnd,
+		FColor(255, 0, 0),
+		true, -1, 0,
+		2
+	);
 
 	FHitResult LedgeHit;
 	const bool bHitLedgeGround = GetWorld()->LineTraceSingleByChannel(LedgeHit, CheckLocation, CheckEnd,
@@ -459,9 +493,10 @@ bool UCustomCharacterMovementComponent::IsLocationWalkable(const FVector& CheckL
 bool UCustomCharacterMovementComponent::CanMoveToLedgeClimbLocation() const
 {
 	//앞으로120 위로 160만큼의 거리에서 아래로 체크합니다
-	const FVector VerticalOffset = FVector::UpVector * 160.f;
+	const FVector VerticalOffset = FVector::UpVector * 180.f;
 	const FVector HorizontalOffset = UpdatedComponent->GetForwardVector() * 120.f;
 
+	//캡슐에서 앞으로120 위로 160
 	const FVector CheckLocation = UpdatedComponent->GetComponentLocation() + HorizontalOffset + VerticalOffset;
 
 	if (!IsLocationWalkable(CheckLocation))
@@ -473,6 +508,31 @@ bool UCustomCharacterMovementComponent::CanMoveToLedgeClimbLocation() const
 	FHitResult CapsuleHit;
 	const FVector CapsuleStartCheck = CheckLocation - HorizontalOffset;
 	const UCapsuleComponent* Capsule = CharacterOwner->GetCapsuleComponent();
+
+	//Debug
+	/*DrawDebugCapsule(GetWorld(),
+		CapsuleStartCheck,
+		Capsule->GetUnscaledCapsuleHalfHeight(),
+		Capsule->GetUnscaledCapsuleRadius(),
+		FQuat::Identity,
+		FColor::Cyan,
+		true,
+		-1,
+		0,
+		2
+	);
+
+	DrawDebugCapsule(GetWorld(),
+		CheckLocation,
+		Capsule->GetUnscaledCapsuleHalfHeight(),
+		Capsule->GetUnscaledCapsuleRadius(),
+		FQuat::Identity,
+		FColor::Cyan,
+		true,
+		-1,
+		0,
+		2
+	);*/
 
 	const bool bBlocked = GetWorld()->SweepSingleByChannel(CapsuleHit, CapsuleStartCheck, CheckLocation,
 		FQuat::Identity, ECC_WorldStatic, Capsule->GetCollisionShape(), ClimbQueryparams);
@@ -487,6 +547,11 @@ bool UCustomCharacterMovementComponent::CalculateJumpClimbPoint(float ForwardVal
 
 	if (Direction.Size() == 0)
 	{
+		//제자리
+		if (AnimInstance && JumpClimbFailMontage && !AnimInstance->Montage_IsPlaying(JumpClimbFailMontage))
+		{
+			AnimInstance->Montage_Play(JumpClimbFailMontage);
+		}
 		return false;
 	}
 
@@ -501,13 +566,13 @@ bool UCustomCharacterMovementComponent::CalculateJumpClimbPoint(float ForwardVal
 		FHitResult Result;
 		bool bIsHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 30, TraceTypeQuery1,
 			false, IgnoreActor, EDrawDebugTrace::ForDuration, Result, true);
-		
+
 		//벽을 탐지하면 잡을 수 있는 위치를 탐색합니다
 		if (bIsHit)
 		{
 			FHitResult NewResult;
 			bool bIsNewHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Result.ImpactPoint + FVector(0, 0, 20), Result.ImpactPoint - FVector(0, 0, 5), 10, TraceTypeQuery1,
-				false, IgnoreActor, EDrawDebugTrace::ForDuration, NewResult, true);
+				false, IgnoreActor, EDrawDebugTrace::None, NewResult, true);
 
 			//짚을수 있는 지점이 있고 그 지점의 노말벡터가 업벡터를 내적한 값이 1에 근접하면 즉 거의 평행한다면 잡을 수 있는 지점이다
 			if (bIsNewHit)
@@ -518,6 +583,10 @@ bool UCustomCharacterMovementComponent::CalculateJumpClimbPoint(float ForwardVal
 					//정보 저장
 					CurrentJumpClimbHit = NewResult;
 					CurrentJumpClimbWallHit = Result;
+					//Z가 1인경우에는 이 벡터와 적
+					if (CurrentJumpClimbWallHit.Normal.Z > 0.9)
+						CurrentJumpClimbWallHit.Normal = FVector::CrossProduct(CurrentJumpClimbWallHit.Normal, UpdatedComponent->GetRightVector());
+					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("%s"), *CurrentJumpClimbWallHit.Normal.ToString()));
 					CurrentJumpClimbWallHit.Normal = CurrentJumpClimbWallHit.Normal.GetSafeNormal2D();
 					return true;
 				}
@@ -569,6 +638,8 @@ void UCustomCharacterMovementComponent::SetWarpJumpClimbValue(float ForwardValue
 	JumpClimbMontage = ClimbJumpMontages[FMath::RoundToInt(-ForwardValue + 1) * 3 + FMath::RoundToInt(RightValue + 1)];
 
 	FRotator TragetRotation = UKismetMathLibrary::MakeRotFromX(-CurrentJumpClimbWallHit.Normal);
-	WarpJumpClimbingPoint = CurrentJumpClimbHit.ImpactPoint - FVector(0, 0, 162) - UKismetMathLibrary::GetForwardVector(TragetRotation) * 33;
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("%s"), *CurrentJumpClimbWallHit.Normal.ToString()));
+	if (ForwardValue != 0 || RightValue != 0)
+		WarpJumpClimbingPoint = CurrentJumpClimbHit.ImpactPoint - FVector(0, 0, 162) - UKismetMathLibrary::GetForwardVector(TragetRotation) * 33;
 	WarpJumpClimbingRotation = TragetRotation;
 }

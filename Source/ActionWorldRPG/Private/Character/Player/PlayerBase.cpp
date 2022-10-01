@@ -751,7 +751,7 @@ void APlayerBase::ClimbMoveRight(float Value)
 			false, IgnoreActor, EDrawDebugTrace::ForOneFrame, NewResult, true);
 		
 		//짚을수 있는 지점이 있다면 이동합니다.
-		if (bIsNewHit)
+		if (bIsNewHit && !MovementComponent->GetIsJumpClimb())
 		{
 			AddMovementInput(Direction, Value);
 		}
