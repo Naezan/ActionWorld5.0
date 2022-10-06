@@ -577,12 +577,13 @@ void AActionCharacterBase::DestroyWhenFinishDeath()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
+		FinishDying();
 		//액터가 사라지기전에 안정적으로 컨트롤러 제거
 		DetachFromControllerPendingDestroy();
 		SetLifeSpan(0.1f);
 	}
 
-	FinishDying();
+	//FinishDying();
 
 	SetActorHiddenInGame(true);
 }

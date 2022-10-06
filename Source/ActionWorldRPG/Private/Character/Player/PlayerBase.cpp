@@ -749,7 +749,7 @@ void APlayerBase::ClimbMoveRight(float Value)
 		FHitResult NewResult;
 		bool bIsNewHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Result.ImpactPoint + FVector(0, 0, 20), Result.ImpactPoint, 10, TraceTypeQuery1,
 			false, IgnoreActor, EDrawDebugTrace::ForOneFrame, NewResult, true);
-		
+
 		//짚을수 있는 지점이 있다면 이동합니다.
 		if (bIsNewHit && !MovementComponent->GetIsJumpClimb())
 		{
