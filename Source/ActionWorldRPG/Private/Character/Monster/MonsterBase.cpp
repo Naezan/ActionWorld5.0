@@ -2,6 +2,7 @@
 
 
 #include "Character/Monster/MonsterBase.h"
+#include "Character/Player/PlayerBase.h"
 
 //어빌리티
 #include "AbilitySystem/ActionAbilitySystemComponent.h"
@@ -11,6 +12,11 @@
 
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+
+//AI
+#include "Components/CapsuleComponent.h"
+#include "Perception/AIPerceptionSystem.h"
+#include "Perception/AISense_Touch.h"
 
 AMonsterBase::AMonsterBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -26,6 +32,8 @@ void AMonsterBase::PostInitializeComponents()
 void AMonsterBase::BeginPlay()
 {
 	Super::BeginPlay();
+	//AI의 Touch인식용
+	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ThisClass::CapsuleHit);
 
 	RelativeVectorToWorldVector(PatrolPoint);
 
@@ -62,5 +70,21 @@ void AMonsterBase::RelativeVectorToWorldVector(TArray<FVector>& VectorArray)
 	for (FVector& Vector : VectorArray)
 	{
 		Vector = UKismetMathLibrary::TransformLocation(GetActorTransform(), Vector);
+	}
+}
+
+void AMonsterBase::CapsuleHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (MonsterController != nullptr)
+	{
+		if (APlayerBase* Player = Cast<APlayerBase>(OtherActor))
+		{
+			UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(this);
+			if (PerceptionSystem)
+			{
+				FAITouchEvent Event(MonsterController, Player, Hit.ImpactPoint);
+				PerceptionSystem->OnEvent(Event);
+			}
+		}
 	}
 }
