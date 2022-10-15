@@ -58,6 +58,11 @@ UInteractionHUD* AActionPlayerController::GetInteractionHUD()
 	return InteractionWidget;
 }
 
+UUserWidget* AActionPlayerController::GetBlackOutWidget()
+{
+	return BlackOutWidget;
+}
+
 int32 AActionPlayerController::GetPrimaryClipAmmo()
 {
 	return int32();

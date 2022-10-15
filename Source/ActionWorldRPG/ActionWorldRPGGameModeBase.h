@@ -19,6 +19,7 @@ public:
 
 	//Begin GameModeBase interface
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	virtual void StartPlay() override;
 	//End GameModeBase interface
 
 	void UpdateLoadState();

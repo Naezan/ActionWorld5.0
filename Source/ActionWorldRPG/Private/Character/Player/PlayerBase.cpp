@@ -35,9 +35,14 @@
 
 //UI
 #include "HUD/InteractionHUD.h"
-
+#include "HUD/QuestWidget.h"
 #include "MotionWarpingComponent.h"
 #include "Character/Player/CustomCharacterMovementComponent.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
+
+//Quest
+#include "Component/Quest/QuestSystemComponent.h"
 
 APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCustomCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -559,6 +564,9 @@ void APlayerBase::BeginPlay()
 	// On respawn, they are set up in PossessedBy.
 	// When the player a client, the floating status bars are all set up in OnRep_PlayerState.
 	//InitializeFloatingStatusBar();
+
+	//퀘스트 컴포넌트를 찾을때까지 실행해줍니다.
+	FindQuestComponent();
 
 	// CurrentWeapon is replicated only to Simulated clients so sync the current weapon manually
 	if (GetLocalRole() == ROLE_AutonomousProxy)
@@ -1368,6 +1376,34 @@ void APlayerBase::InterpFOV(float DeltaTime)
 void APlayerBase::SetHitTarget(FVector hitTarget)
 {
 	HitTarget = hitTarget;
+}
+
+void APlayerBase::FindQuestComponent()
+{
+	QuestComponent = FindComponentByClass<UQuestSystemComponent>();
+	if (QuestComponent == nullptr)
+	{
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindUFunction(this, FName("FindQuestComponent"));
+		GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+	}
+	else
+	{
+		//에러 생길 수 있다
+		if (QuestWidgetClass != nullptr)
+		{
+			QuestWidget = CreateWidget<UQuestWidget>(PlayerController, QuestWidgetClass);
+			//기본셋팅
+			QuestWidget->BindQuestDelegateFunction(this);
+			UWidget* RootWidget = PlayerController->GetBlackOutWidget()->GetRootWidget();
+			UCanvasPanelSlot* QuestSlot = Cast<UCanvasPanel>(RootWidget)->AddChildToCanvas(QuestWidget);
+			//QuestWidget->AddToViewport();
+			QuestSlot->SetAnchors(FAnchors(0, 0.5, 0, 0.5));
+			QuestSlot->SetSize(FVector2D(500, 150));
+			QuestSlot->SetAlignment(FVector2D(0, 0.5));
+			QuestSlot->SetPosition(FVector2D(0, 0));
+		}
+	}
 }
 
 EPhysicalSurface APlayerBase::GetSurfaceType()

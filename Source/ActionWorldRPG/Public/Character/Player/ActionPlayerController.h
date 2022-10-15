@@ -35,7 +35,11 @@ public:
 public:
 	void CreateInteractionHUD();
 
+	UFUNCTION()
 	UInteractionHUD* GetInteractionHUD();
+
+	UFUNCTION()
+		UUserWidget* GetBlackOutWidget();
 
 	//UFUNCTION(BlueprintCallable, Category = "UI")
 	//	void SetEquippedWeaponPrimaryIconFromSprite(UPaperSprite* InSprite);
@@ -91,6 +95,12 @@ protected:
 		//C++로 생성합니다 BP에서 생성할 수 없습니다
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 		UInteractionHUD* InteractionWidget;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "UI")
+		TSubclassOf<UUserWidget> BlackOutWidgetClass;
+
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+		UUserWidget* BlackOutWidget;
 
 	//플레이어 컨트롤러는 스테이트정보를 기본적으로 가지고 있다
 

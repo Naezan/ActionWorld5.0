@@ -54,6 +54,20 @@ bool UQuestSystemComponent::AddQuest(FQuest Quest)
 	ActiveQuest = Quest;
 
 	//OnQuestAdded broadcast UI용
+	//퀘스트의 데이터를 UI에 업데이트합니다.
+	OnAddedRemovedQuest.Broadcast();
+
+	//플레이어에게 퀘스트를 받았음을 전달합니다
+	OnQuestNotify.Broadcast(false, Quest.QuestName);
+
+	//UI에게 TTS할 텍스트를 전달합니다.
+	SetTTSOnAddedCompletedQuest.Broadcast(Quest.QuestAddedText);
+
+	//현재 퀘스트 타입이 Kill이라면
+	if (Quest.QuestType == EQuestType::QT_Kill)
+	{
+		OnQuestStepUpdate.Broadcast();
+	}
 
 	return bIsSuccess;
 }
@@ -69,6 +83,14 @@ void UQuestSystemComponent::CompleteQuest(bool& bSuccess)
 	//현재퀘스트 상태변경
 	Quests->QuestDatas[CurrentQuestID].bComplete = true;
 	Quests->QuestDatas[CurrentQuestID].bActive = false;
+
+	//OnQuestCompleted broadcast UI용
+	OnCompleteQuest.Broadcast();
+
+	OnQuestNotify.Broadcast(true, Quests->QuestDatas[CurrentQuestID].QuestName);
+
+	//UI에게 TTS할 텍스트를 전달합니다.
+	SetTTSOnAddedCompletedQuest.Broadcast(Quests->QuestDatas[CurrentQuestID].QuestCompletedText);
 
 	//보상이 존재한다면
 	FReward NewReward = Quests->QuestDatas[CurrentQuestID].Reward;
@@ -98,8 +120,6 @@ void UQuestSystemComponent::CompleteQuest(bool& bSuccess)
 		//최상단퀘스트 선택
 		bSuccess = SelectQuest(CurrentQuestID - 1);// or SelectQuest(0);
 	}
-
-	//OnQuestCompleted broadcast UI용
 }
 
 void UQuestSystemComponent::CompleteQuestStep(bool& bSuccess, TSubclassOf<AActor> TargetActorClass)
@@ -117,6 +137,10 @@ void UQuestSystemComponent::CompleteQuestStep(bool& bSuccess, TSubclassOf<AActor
 	}
 
 	ActiveQuest.TargetCount = ++Quests->QuestDatas[CurrentQuestID].TargetCount;
+	
+	//OnQuestStepUpdate UI
+	OnQuestStepUpdate.Broadcast();
+
 	if (ActiveQuest.TargetCount >= ActiveQuest.MaxTargetCount)
 	{
 		CompleteQuest(bSuccess);
@@ -149,9 +173,17 @@ bool UQuestSystemComponent::SelectQuest(const int32 QuestID)
 			CurrentQuestID = QuestID;
 			Quests->QuestDatas[QuestID].bActive = true;
 			ActiveQuest = Quests->QuestDatas[QuestID];
+
+			//활성화된 퀘스트가 Kill타입이라면
+			if (ActiveQuest.QuestType == EQuestType::QT_Kill)
+			{
+				OnQuestStepUpdate.Broadcast();
+			}
 		}
 
 		//OnQuestSelected broadcast UI용
+		//선택한 퀘스트를 UI에서 바꿔?줍니다?
+		OnSelectQuest.Broadcast(ActiveQuest.QuestName, ActiveQuest.QeustDescription);
 	}
 	//퀘스트에 퀘스트가 없거나 인덱스가 초과했다면 퀘스트를 선택하지 않습니다.
 	else
@@ -159,6 +191,8 @@ bool UQuestSystemComponent::SelectQuest(const int32 QuestID)
 		ResetCurrentQuest();
 
 		//OnQuestCleared broadcast UI용
+		//모든 퀘스트 클리어?
+		//퀘스트를 Remove할일이 없기 때문에 호출될 일이 없습니다.
 	}
 
 	return bIsSuccess;
@@ -187,6 +221,11 @@ bool UQuestSystemComponent::RemoveQuest(const int32 QuestID)
 		//}
 
 		//OnQuestRemoved broadcast UI용
+		//퀘스트의 데이터를 UI에 업데이트합니다.
+		OnAddedRemovedQuest.Broadcast();
+
+		//플레이어에게 퀘스트를 제거했음을 전달합니다.
+		//OnQuestNotify.Broadcast(false, Quest.QuestName);
 	}
 
 	return bIsSuccess;

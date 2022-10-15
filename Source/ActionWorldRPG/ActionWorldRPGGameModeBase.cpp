@@ -31,6 +31,11 @@ void AActionWorldRPGGameModeBase::InitGame(const FString& MapName, const FString
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::UpdateLoadState);
 }
 
+void AActionWorldRPGGameModeBase::StartPlay()
+{
+	Super::StartPlay();
+}
+
 void AActionWorldRPGGameModeBase::UpdateLoadState()
 {
 	AActionGameState* ActionGameState = Cast<AActionGameState>(GameState);

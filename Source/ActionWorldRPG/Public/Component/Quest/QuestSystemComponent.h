@@ -7,6 +7,27 @@
 #include "Component/Quest/QuestData.h"
 #include "QuestSystemComponent.generated.h"
 
+//퀘스트가 추가되거나 삭제될때 추가된 UI함수를 브로드캐스팅합니다.
+//HUD의 오른쪽에 현재 퀘스트의 이름 및 내용을 짧게 표시해줍니다.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAddedRemovedQuest);
+
+//퀘스트가 완료되거나 받았을때(추가) 플레이어에게 알려줄 UI함수를 브로드캐스팅합니다.
+//전면에 큰 UI로 ??퀘스트완료나 ??퀘스트 + 퀘스트내용을 출력합니다.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNotifyQuest, bool, bQuestCompleted, FString, QuestName);
+
+//퀘스트가 선택될 때 추가된 UI함수를 브로드캐스팅합니다.
+//HUD의 오른쪽에 현재 퀘스트 표시를 수정합니다?
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSelectQuest, FString, QuestName, FString, QuestDesc);
+
+//퀘스트가 완료스탭이 완료될 때 추가된 UI함수를 브로드캐스팅합니다.
+//HUD의 오른쪽에 현재 퀘스트의 디테일내용을 수정합니다.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCompleteQuestStepUpdate);
+
+//퀘스트가 완료될 때 추가된 UI함수를 브로드캐스팅합니다.
+//HUD의 오른쪽에 현재 퀘스트 표시를 삭제합니다.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCompleteQuest);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSetTTSOnAddedOrCompletedQuest, TArray<FString>, TTSText);
 
 UCLASS()
 class ACTIONWORLDRPG_API UQuestSystemComponent : public UActorComponent
@@ -15,6 +36,22 @@ class ACTIONWORLDRPG_API UQuestSystemComponent : public UActorComponent
 
 public:
 	UQuestSystemComponent();
+
+	/** Used to update variables */
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Event Dispatchers")
+		FAddedRemovedQuest OnAddedRemovedQuest;
+	/** Used for UI to notify the player of quest changes */
+	UPROPERTY(BlueprintAssignable, Category = "Event Dispatchers")
+		FNotifyQuest OnQuestNotify;
+	UPROPERTY(BlueprintAssignable, Category = "Event Dispatchers")
+		FSelectQuest OnSelectQuest;
+	UPROPERTY(BlueprintAssignable, Category = "Event Dispatchers")
+		FCompleteQuestStepUpdate OnQuestStepUpdate;
+	UPROPERTY(BlueprintAssignable, Category = "Event Dispatchers")
+		FCompleteQuest OnCompleteQuest;
+	//TTS용 델리게이트입니다.
+	UPROPERTY(BlueprintAssignable, Category = "Event Dispatchers")
+		FSetTTSOnAddedOrCompletedQuest SetTTSOnAddedCompletedQuest;
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,6 +73,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		bool SelectQuest(const int32 QuestID);
 	//인덱스에맞는퀘스트를지우고 그 퀘스트가 현재퀘스트라면 새로운퀘스트를 선택합니다.
+	//현재 게임에선 사용하지 않습니다.
 	UFUNCTION(BlueprintCallable)
 		bool RemoveQuest(const int32 QuestID);
 

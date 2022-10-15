@@ -67,6 +67,12 @@ struct FQuest : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
 		FReward Reward;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
+		TArray<FString> QuestAddedText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
+		TArray<FString> QuestCompletedText;
+
 	//퀘스트르 현재 활성화되어있는지 사용안할수도 있다
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
 		bool bActive = false;

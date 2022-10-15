@@ -24,6 +24,9 @@ class USpringArmComponent;
 class AWeaponBase;
 class UInputAction;
 
+class UQuestWidget;
+class UQuestSystemComponent;
+
 //어빌리티
 UENUM(BlueprintType)
 enum class EPlayerWeaponState : uint8
@@ -148,6 +151,13 @@ public:
 		FVector GetHitTarget() const;
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 		void SetHitTarget(FVector hitTarget);
+
+	//Quest UI
+	UFUNCTION(BlueprintPure)
+		FORCEINLINE UQuestSystemComponent* GetQuestComponent() const { return QuestComponent; };
+
+	UFUNCTION()
+	void FindQuestComponent();
 
 	//FootStep
 	UFUNCTION(BlueprintCallable, Category = "Footstep")
@@ -308,6 +318,14 @@ protected:
 	float CrosshairInAirFactor; //공중에 있을때
 	float CrosshairAimFactor; //에임동작일때
 	float CrosshairShootingFactor; //총을 쏠때
+
+	//QuestUI
+	UPROPERTY()
+		UQuestWidget* QuestWidget;
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<UQuestWidget> QuestWidgetClass;
+	UPROPERTY(EditAnywhere)
+		UQuestSystemComponent* QuestComponent;
 
 	//모션워핑
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "MotionWarping")
