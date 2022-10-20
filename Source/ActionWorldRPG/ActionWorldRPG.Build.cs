@@ -14,13 +14,13 @@ public class ActionWorldRPG : ModuleRules
             "UMG", "Paper2D", "EnhancedInput", "PhysicsCore", "AIModule",
             "ModularGameplay", "GameFeatures",
             "LoadingScreen",
-            "MotionWarping", "Slate", "SlateCore"
+            "MotionWarping", "Niagara"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
 
         // Uncomment if you are using Slate UI
-        PrivateDependencyModuleNames.AddRange(new string[] { });
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
         // Uncomment if you are using online features
         // PrivateDependencyModuleNames.Add("OnlineSubsystem");

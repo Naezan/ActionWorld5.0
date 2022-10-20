@@ -93,8 +93,8 @@ public:
 
 	void SetOwningCharacter(APlayerBase* InOwningCharacter);
 
-	// Pickup on touch
-	virtual void NotifyActorBeginOverlap(class AActor* Other) override;
+	// 무기 상호작용시 호출됩니다.
+	virtual void AddWeaponInfoOnInteract(class AActor* Other);
 
 	// Called when the player equips this weapon
 	virtual void Equip();
@@ -240,7 +240,7 @@ protected:
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
 	// Called when the player picks up this weapon
-	virtual void PickUpOnTouch(APlayerBase* InCharacter);
+	virtual void PickUpOnInteract(APlayerBase* InCharacter);
 
 	UFUNCTION()
 		virtual void OnRep_PrimaryClipAmmo(int32 OldPrimaryClipAmmo);

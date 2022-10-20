@@ -116,31 +116,30 @@ void AWeaponBase::SetOwningCharacter(APlayerBase* InOwningCharacter)
 		// Called when added to inventory
 		AbilitySystemComponent = Cast<UActionAbilitySystemComponent>(OwningCharacter->GetAbilitySystemComponent());
 		SetOwner(InOwningCharacter);
-		AttachToComponent(OwningCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		//AttachToComponent(OwningCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 		CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		if (OwningCharacter->GetCurrentWeapon() != this)
-		{
-			WeaponMesh3P->CastShadow = false;
-			WeaponMesh3P->SetVisibility(true, true);
-			WeaponMesh3P->SetVisibility(false, true);
-		}
+		//무기가 다르다면?
+		//if (true/*OwningCharacter->GetCurrentWeapon() != this*/)
+		//{
+		//	WeaponMesh3P->CastShadow = false;
+		//	WeaponMesh3P->SetVisibility(true, true);
+		//	WeaponMesh3P->SetVisibility(false, true);
+		//}
 	}
 	else
 	{
 		AbilitySystemComponent = nullptr;
 		SetOwner(nullptr);
-		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		//DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	}
 }
 
-void AWeaponBase::NotifyActorBeginOverlap(AActor* Other)
+void AWeaponBase::AddWeaponInfoOnInteract(AActor* Other)
 {
-	Super::NotifyActorBeginOverlap(Other);
-
 	if (IsValid(this) && !OwningCharacter)
 	{
-		PickUpOnTouch(Cast<APlayerBase>(Other));
+		PickUpOnInteract(Cast<APlayerBase>(Other));
 	}
 }
 
@@ -373,7 +372,7 @@ void AWeaponBase::EndPlay(EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void AWeaponBase::PickUpOnTouch(APlayerBase* InCharacter)
+void AWeaponBase::PickUpOnInteract(APlayerBase* InCharacter)
 {
 	if (!InCharacter || !InCharacter->IsAlive() || !InCharacter->GetAbilitySystemComponent() || InCharacter->GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(RestrictedPickupTags))
 	{

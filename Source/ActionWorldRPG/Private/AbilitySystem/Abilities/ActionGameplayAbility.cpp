@@ -179,10 +179,11 @@ bool UActionGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 		}
 	}
 
+	//무기 어빌리티 활성화 여부
 	if (bSourceObjectMustEqualCurrentWeaponToActivate)
 	{
 		APlayerBase* Hero = Cast<APlayerBase>(ActorInfo->AvatarActor);
-		if (Hero && Hero->GetCurrentWeapon() && (UObject*)Hero->GetCurrentWeapon() == GetSourceObject(Handle, ActorInfo))
+		if (Hero /*&& Hero->GetCurrentWeapon() && (UObject*)Hero->GetCurrentWeapon() == GetSourceObject(Handle, ActorInfo)*/)
 		{
 			return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 		}
