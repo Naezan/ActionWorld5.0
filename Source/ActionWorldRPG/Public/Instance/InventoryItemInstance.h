@@ -9,7 +9,7 @@
 
 class UInventoryItemDefinition;
 
-//어떤상황에서 사용할지 정확하지 않습니다.
+//탄창을 저장할 때 사용합니다.
 USTRUCT(BlueprintType)
 struct FGameplayTagStack
 {
@@ -108,7 +108,7 @@ private:
 	friend struct FInventoryList;
 
 private:
-	//태그 정보 정확히 어떻게 사용?
+	//태그 정보 탄창 정보를 가지고 있습니다.
 	UPROPERTY()
 		FGameplayTagStackList StatTags;
 

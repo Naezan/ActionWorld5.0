@@ -27,20 +27,6 @@ class UInputAction;
 class UQuestWidget;
 class UQuestSystemComponent;
 
-//어빌리티
-UENUM(BlueprintType)
-enum class EPlayerWeaponState : uint8
-{
-	// 0
-	Rifle					UMETA(DisplayName = "Rifle"),
-	// 1
-	RifleAiming				UMETA(DisplayName = "Rifle Aiming"),
-	// 2
-	RocketLauncher			UMETA(DisplayName = "Rocket Launcher"),
-	// 3
-	RocketLauncherAiming	UMETA(DisplayName = "Rocket Launcher Aiming")
-};
-
 UCLASS()
 class ACTIONWORLDRPG_API APlayerBase : public AActionCharacterBase, public IInteractCrosshairInterface
 {
@@ -68,7 +54,7 @@ public:
 
 	virtual void FinishDying() override;
 
-	//3인칭 프로퍼티
+	//1인칭 프로퍼티
 	UFUNCTION(BlueprintCallable, Category = "Character")
 		virtual bool IsInFirstPersonPerspective() const;
 
@@ -232,11 +218,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 		bool bIsFirstPersonPerspective;
 
-	// Set to true when we change the weapon predictively and flip it to false when the Server replicates to confirm.
-	// We use this if the Server refused a weapon change ability's activation to ask the Server to sync the client back up
-	// with the correct CurrentWeapon.
-	bool bChangedWeaponLocally;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 		float Default3PFOV;
 
@@ -284,10 +265,6 @@ protected:
 
 	/** Delegate handles */
 
-	// Attribute changed delegate handles
-	FDelegateHandle PrimaryReserveAmmoChangedDelegateHandle;
-	FDelegateHandle SecondaryReserveAmmoChangedDelegateHandle;
-
 	// Tag changed delegate handles
 	FDelegateHandle WeaponChangingDelayReplicationTagChangedDelegateHandle;
 
@@ -301,21 +278,7 @@ protected:
 	// Sets the perspective
 	void SetPerspective(bool Is1PPerspective);
 
-	// Server spawns default inventory
-	void SpawnDefaultInventory();
-
 	void SetupStartupPerspective();
-
-
-	UFUNCTION()
-		virtual void CurrentWeaponPrimaryClipAmmoChanged(int32 OldPrimaryClipAmmo, int32 NewPrimaryClipAmmo);
-
-	UFUNCTION()
-		virtual void CurrentWeaponSecondaryClipAmmoChanged(int32 OldSecondaryClipAmmo, int32 NewSecondaryClipAmmo);
-
-	// Attribute changed callbacks
-	virtual void CurrentWeaponPrimaryReserveAmmoChanged(const FOnAttributeChangeData& Data);
-	virtual void CurrentWeaponSecondaryReserveAmmoChanged(const FOnAttributeChangeData& Data);
 
 	UFUNCTION(BlueprintCallable)
 		bool CalculateWallOverPoint(FVector AnimRootStartPoint, int32 WarpStartForwardMul = 30, int32 WarpLandForwardMul = 200, int32 WarpEndForwardMul = 50);

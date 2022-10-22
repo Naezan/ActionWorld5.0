@@ -36,7 +36,7 @@ public:
 	void CreateInteractionHUD();
 
 	UFUNCTION()
-	UInteractionHUD* GetInteractionHUD();
+		UInteractionHUD* GetInteractionHUD();
 
 	UFUNCTION()
 		UUserWidget* GetBlackOutWidget();
@@ -46,18 +46,6 @@ public:
 
 	//UFUNCTION(BlueprintCallable, Category = "UI")
 	//	void SetEquippedWeaponStatusText(const FText& StatusText);
-
-	UFUNCTION(BlueprintPure, Category = "UI")
-		int32 GetPrimaryClipAmmo();
-
-	UFUNCTION(BlueprintPure, Category = "UI")
-		int32 GetPrimaryReserveAmmo();
-
-	UFUNCTION(BlueprintPure, Category = "UI")
-		int32 GetSecondaryClipAmmo();
-
-	UFUNCTION(BlueprintPure, Category = "UI")
-		int32 GetSecondaryReserveAmmo();
 
 	//UFUNCTION(BlueprintCallable, Category = "UI")
 	//	void SetHUDReticle(TSubclassOf<class UGSHUDReticle> ReticleClass);
@@ -92,14 +80,14 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "UI")
 		TSubclassOf<UInteractionHUD> InteractionWidgetClass;
 
-		//C++로 생성합니다 BP에서 생성할 수 없습니다
+	//C++로 생성합니다 BP에서 생성할 수 없습니다
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 		UInteractionHUD* InteractionWidget;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "UI")
 		TSubclassOf<UUserWidget> BlackOutWidgetClass;
 
-	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "UI")
 		UUserWidget* BlackOutWidget;
 
 	//플레이어 컨트롤러는 스테이트정보를 기본적으로 가지고 있다

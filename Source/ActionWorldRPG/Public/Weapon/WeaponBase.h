@@ -56,9 +56,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "UI")
 		UPaperSprite* SecondaryClipIcon;
 
-	UPROPERTY(BlueprintReadWrite, VisibleInstanceOnly, Category = "Weapon")
-		FGameplayTag FireMode;
-
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
 		FGameplayTag PrimaryAmmoType;
 
@@ -69,23 +66,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleInstanceOnly, Category = "Weapon")
 		FText StatusText;
 
-	UPROPERTY(BlueprintAssignable, Category = "Weapon")
-		FWeaponAmmoChangedDelegate OnPrimaryClipAmmoChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Weapon")
-		FWeaponAmmoChangedDelegate OnMaxPrimaryClipAmmoChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Weapon")
-		FWeaponAmmoChangedDelegate OnSecondaryClipAmmoChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Weapon")
-		FWeaponAmmoChangedDelegate OnMaxSecondaryClipAmmoChanged;
-
 	// Implement IAbilitySystemInterface
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Weapon")
-		virtual USkeletalMeshComponent* GetWeaponMesh3P() const;
+		virtual USkeletalMeshComponent* GetWeaponMesh() const;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -96,50 +81,11 @@ public:
 	// 무기 상호작용시 호출됩니다.
 	virtual void AddWeaponInfoOnInteract(class AActor* Other);
 
-	// Called when the player equips this weapon
-	virtual void Equip();
-
-	// Called when the player unequips this weapon
-	virtual void UnEquip();
-
 	virtual void AddAbilities();
 
 	virtual void RemoveAbilities();
 
 	virtual int32 GetAbilityLevel(EActionAbilityInputID AbilityID);
-
-	// Resets things like fire mode to default
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual void ResetWeapon();
-
-	UFUNCTION(NetMulticast, Reliable)
-		void OnDropped(FVector NewLocation);
-	virtual void OnDropped_Implementation(FVector NewLocation);
-	virtual bool OnDropped_Validate(FVector NewLocation);
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual int32 GetPrimaryClipAmmo() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual int32 GetMaxPrimaryClipAmmo() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual int32 GetSecondaryClipAmmo() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual int32 GetMaxSecondaryClipAmmo() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual void SetPrimaryClipAmmo(int32 NewPrimaryClipAmmo);
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual void SetMaxPrimaryClipAmmo(int32 NewMaxPrimaryClipAmmo);
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual void SetSecondaryClipAmmo(int32 NewSecondaryClipAmmo);
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-		virtual void SetMaxSecondaryClipAmmo(int32 NewMaxSecondaryClipAmmo);
 
 	//UFUNCTION(BlueprintCallable, Category = "Weapon")
 	//	TSubclassOf<class UGSHUDReticle> GetPrimaryHUDReticleClass() const;
@@ -148,7 +94,7 @@ public:
 		virtual bool HasInfiniteAmmo() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Animation")
-		UAnimMontage* GetEquip3PMontage() const;
+		UAnimMontage* GetEquipMontage() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		class USoundCue* GetPickupSound() const;
@@ -168,20 +114,6 @@ protected:
 	UPROPERTY()
 		UActionAbilitySystemComponent* AbilitySystemComponent;
 
-	// How much ammo in the clip the gun starts with
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, ReplicatedUsing = OnRep_PrimaryClipAmmo, Category = "Weapon|Ammo")
-		int32 PrimaryClipAmmo;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, ReplicatedUsing = OnRep_MaxPrimaryClipAmmo, Category = "Weapon|Ammo")
-		int32 MaxPrimaryClipAmmo;
-
-	// How much ammo in the clip the gun starts with. Used for things like rifle grenades.
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, ReplicatedUsing = OnRep_SecondaryClipAmmo, Category = "Weapon|Ammo")
-		int32 SecondaryClipAmmo;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, ReplicatedUsing = OnRep_MaxSecondaryClipAmmo, Category = "Weapon|Ammo")
-		int32 MaxSecondaryClipAmmo;
-
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Weapon|Ammo")
 		bool bInfiniteAmmo;
 
@@ -196,7 +128,7 @@ protected:
 		class UCapsuleComponent* CollisionComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-		USkeletalMeshComponent* WeaponMesh3P;
+		USkeletalMeshComponent* WeaponMesh;
 
 	// Relative Location of weapon 3P Mesh when in pickup mode
 	// 1P weapon mesh is invisible so it doesn't need one
@@ -217,6 +149,9 @@ protected:
 		TArray<FGameplayAbilitySpecHandle> AbilitySpecHandles;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Weapon")
+		FGameplayTag FireMode;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Weapon")
 		FGameplayTag DefaultFireMode;
 
 	// Things like fire mode for rifle
@@ -224,7 +159,7 @@ protected:
 		FText DefaultStatusText;
 
 	UPROPERTY(BlueprintReadonly, EditAnywhere, Category = "Animation")
-		UAnimMontage* Equip3PMontage;
+		UAnimMontage* EquipMontage;
 
 	// Sound played when player picks it up
 	UPROPERTY(EditDefaultsOnly, Category = "Audio")
@@ -241,18 +176,6 @@ protected:
 
 	// Called when the player picks up this weapon
 	virtual void PickUpOnInteract(APlayerBase* InCharacter);
-
-	UFUNCTION()
-		virtual void OnRep_PrimaryClipAmmo(int32 OldPrimaryClipAmmo);
-
-	UFUNCTION()
-		virtual void OnRep_MaxPrimaryClipAmmo(int32 OldMaxPrimaryClipAmmo);
-
-	UFUNCTION()
-		virtual void OnRep_SecondaryClipAmmo(int32 OldSecondaryClipAmmo);
-
-	UFUNCTION()
-		virtual void OnRep_MaxSecondaryClipAmmo(int32 OldMaxSecondaryClipAmmo);
 
 public:
 	/*

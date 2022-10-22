@@ -63,26 +63,6 @@ UUserWidget* AActionPlayerController::GetBlackOutWidget()
 	return BlackOutWidget;
 }
 
-int32 AActionPlayerController::GetPrimaryClipAmmo()
-{
-	return int32();
-}
-
-int32 AActionPlayerController::GetPrimaryReserveAmmo()
-{
-	return int32();
-}
-
-int32 AActionPlayerController::GetSecondaryClipAmmo()
-{
-	return int32();
-}
-
-int32 AActionPlayerController::GetSecondaryReserveAmmo()
-{
-	return int32();
-}
-
 void AActionPlayerController::ShowDamageNumber_Implementation(float DamageAmount, AActionCharacterBase* TargetCharacter, FGameplayTagContainer DamageNumberTags)
 {
 	if (IsValid(TargetCharacter))

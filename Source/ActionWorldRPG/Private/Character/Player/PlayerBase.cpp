@@ -50,7 +50,6 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	bChangedWeaponLocally = false;
 	bIsFirstPersonPerspective = false;
 	Default3PFOV = 80.0f;
 	NoWeaponTag = FGameplayTag::RequestGameplayTag(FName("Weapon.Equipped.None"));
@@ -180,34 +179,16 @@ void APlayerBase::OnRep_PlayerState()
 	// Bind player input to the AbilitySystemComponent. Also called in SetupPlayerInputComponent because of a potential race condition.
 	//BindASCInput();
 
-	//if (CurrentWeapon)
-	//{
-	//	// If current weapon repped before PlayerState, set tag on ASC
-	//	AbilitySystemComponent->AddLooseGameplayTag(CurrentWeaponTag);
-	//	// Update owning character and ASC just in case it repped before PlayerState
-	//	CurrentWeapon->SetOwningCharacter(this);
-
-	//	if (!PrimaryReserveAmmoChangedDelegateHandle.IsValid())
-	//	{
-	//		PrimaryReserveAmmoChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(CurrentWeapon->PrimaryAmmoType)).AddUObject(this, &APlayerBase::CurrentWeaponPrimaryReserveAmmoChanged);
-	//	}
-	//	if (!SecondaryReserveAmmoChangedDelegateHandle.IsValid())
-	//	{
-	//		SecondaryReserveAmmoChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(CurrentWeapon->SecondaryAmmoType)).AddUObject(this, &APlayerBase::CurrentWeaponSecondaryReserveAmmoChanged);
-	//	}
-	//}
-
-	//if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
-	//{
-	//	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SetHealth"));
-
-	//	// Set Health/Mana/Stamina/Shield to their max. This is only for *Respawn*. It will be set (replicated) by the
-	//	// Server, but we call it here just to be a little more responsive.
-	//	SetHealth(GetMaxHealth());
-	//	SetMana(GetMaxMana());
-	//	SetStamina(GetMaxStamina());
-	//	SetShield(GetMaxShield());
-	//}
+	//리스폰시 호출됩니다.
+	if (AbilitySystemComponent->GetTagCount(DeadTag) > 0)
+	{
+		// Set Health/Mana/Stamina/Shield to their max. This is only for *Respawn*. It will be set (replicated) by the
+		// Server, but we call it here just to be a little more responsive.
+		SetHealth(GetMaxHealth());
+		SetMana(GetMaxMana());
+		SetStamina(GetMaxStamina());
+		SetShield(GetMaxShield());
+	}
 
 	//// Simulated on proxies don't have their PlayerStates yet when BeginPlay is called so we call it again here
 	//InitializeFloatingStatusBar();
@@ -290,37 +271,6 @@ bool APlayerBase::AddWeaponToInventory(AWeaponBase* NewWeapon, bool bEquipWeapon
 			UGameplayStatics::SpawnSoundAttached(PickupSound, GetRootComponent());
 		}
 
-		//// Create a dynamic instant Gameplay Effect to give the primary and secondary ammo
-		//UGameplayEffect* GEAmmo = NewObject<UGameplayEffect>(GetTransientPackage(), FName(TEXT("Ammo")));
-		//GEAmmo->DurationPolicy = EGameplayEffectDurationType::Instant;
-
-		//if (NewWeapon->PrimaryAmmoType != WeaponAmmoTypeNoneTag)
-		//{
-		//	int32 Idx = GEAmmo->Modifiers.Num();
-		//	GEAmmo->Modifiers.SetNum(Idx + 1);
-
-		//	FGameplayModifierInfo& InfoPrimaryAmmo = GEAmmo->Modifiers[Idx];
-		//	InfoPrimaryAmmo.ModifierMagnitude = FScalableFloat(NewWeapon->GetPrimaryClipAmmo());
-		//	InfoPrimaryAmmo.ModifierOp = EGameplayModOp::Additive;
-		//	InfoPrimaryAmmo.Attribute = UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(NewWeapon->PrimaryAmmoType);
-		//}
-
-		//if (NewWeapon->SecondaryAmmoType != WeaponAmmoTypeNoneTag)
-		//{
-		//	int32 Idx = GEAmmo->Modifiers.Num();
-		//	GEAmmo->Modifiers.SetNum(Idx + 1);
-
-		//	FGameplayModifierInfo& InfoSecondaryAmmo = GEAmmo->Modifiers[Idx];
-		//	InfoSecondaryAmmo.ModifierMagnitude = FScalableFloat(NewWeapon->GetSecondaryClipAmmo());
-		//	InfoSecondaryAmmo.ModifierOp = EGameplayModOp::Additive;
-		//	InfoSecondaryAmmo.Attribute = UAmmoAttributeSet::GetReserveAmmoAttributeFromTag(NewWeapon->SecondaryAmmoType);
-		//}
-
-		//if (GEAmmo->Modifiers.Num() > 0)
-		//{
-		//	AbilitySystemComponent->ApplyGameplayEffectToSelf(GEAmmo, 1.0f, AbilitySystemComponent->MakeEffectContext());
-		//}
-
 		NewWeapon->SetOwningCharacter(this);
 		NewWeapon->AddAbilities();
 
@@ -334,16 +284,8 @@ bool APlayerBase::RemoveWeaponFromInventory(AWeaponBase* WeaponToRemove)
 {
 	if (WeaponToRemove)
 	{
-		if (WeaponToRemove)
-		{
-			//UnEquipCurrentWeapon();
-		}
-
 		WeaponToRemove->RemoveAbilities();
 		WeaponToRemove->SetOwningCharacter(nullptr);
-		WeaponToRemove->ResetWeapon();
-
-		// Add parameter to drop weapon?
 
 		return true;
 	}
@@ -397,12 +339,6 @@ void APlayerBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void APlayerBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	//StartingThirdPersonCameraBoomArmLength = ThirdPersonCameraBoom->TargetArmLength;
-	//StartingThirdPersonCameraBoomLocation = ThirdPersonCameraBoom->GetRelativeLocation();
-	//StartingThirdPersonMeshLocation = GetMesh()->GetRelativeLocation();
-
-	GetWorldTimerManager().SetTimerForNextTick(this, &APlayerBase::SpawnDefaultInventory);
 }
 
 void APlayerBase::Tick(float DeltaTime)
@@ -626,32 +562,6 @@ void APlayerBase::SetPerspective(bool Is1PPerspective)
 	}
 }
 
-void APlayerBase::SpawnDefaultInventory()
-{
-	if (GetLocalRole() < ROLE_Authority)
-	{
-		return;
-	}
-
-	int32 NumWeaponClasses = DefaultInventoryWeaponClasses.Num();
-	for (int32 i = 0; i < NumWeaponClasses; i++)
-	{
-		if (!DefaultInventoryWeaponClasses[i])
-		{
-			// An empty item was added to the Array in blueprint
-			continue;
-		}
-
-		AWeaponBase* NewWeapon = GetWorld()->SpawnActorDeferred<AWeaponBase>(DefaultInventoryWeaponClasses[i],
-			FTransform::Identity, this, this, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-		NewWeapon->bSpawnWithCollision = false;
-		NewWeapon->FinishSpawning(FTransform::Identity);
-
-		bool bEquipFirstWeapon = i == 0;
-		AddWeaponToInventory(NewWeapon, bEquipFirstWeapon);
-	}
-}
-
 void APlayerBase::SetupStartupPerspective()
 {
 	APlayerController* PC = Cast<APlayerController>(GetController());
@@ -659,42 +569,6 @@ void APlayerBase::SetupStartupPerspective()
 	if (PC && PC->IsLocalController())
 	{
 		SetPerspective(bIsFirstPersonPerspective);
-	}
-}
-
-void APlayerBase::CurrentWeaponPrimaryClipAmmoChanged(int32 OldPrimaryClipAmmo, int32 NewPrimaryClipAmmo)
-{
-	AActionPlayerController* PC = GetController<AActionPlayerController>();
-	if (PC && PC->IsLocalController())
-	{
-		//PC->SetPrimaryClipAmmo(NewPrimaryClipAmmo);
-	}
-}
-
-void APlayerBase::CurrentWeaponSecondaryClipAmmoChanged(int32 OldSecondaryClipAmmo, int32 NewSecondaryClipAmmo)
-{
-	AActionPlayerController* PC = GetController<AActionPlayerController>();
-	if (PC && PC->IsLocalController())
-	{
-		//PC->SetSecondaryClipAmmo(NewSecondaryClipAmmo);
-	}
-}
-
-void APlayerBase::CurrentWeaponPrimaryReserveAmmoChanged(const FOnAttributeChangeData& Data)
-{
-	AActionPlayerController* PC = GetController<AActionPlayerController>();
-	if (PC && PC->IsLocalController())
-	{
-		//PC->SetPrimaryReserveAmmo(Data.NewValue);
-	}
-}
-
-void APlayerBase::CurrentWeaponSecondaryReserveAmmoChanged(const FOnAttributeChangeData& Data)
-{
-	AActionPlayerController* PC = GetController<AActionPlayerController>();
-	if (PC && PC->IsLocalController())
-	{
-		//PC->SetSecondaryReserveAmmo(Data.NewValue);
 	}
 }
 

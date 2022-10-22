@@ -35,6 +35,7 @@ UInventoryItemInstance* FInventoryList::AddItem(TSubclassOf<UInventoryItemDefini
 	{
 		if (Fragment != nullptr)
 		{
+			//ex) ÅºÃ¢Á¤º¸
 			Fragment->OnInstanceCreated(NewItem.Instance);
 		}
 	}

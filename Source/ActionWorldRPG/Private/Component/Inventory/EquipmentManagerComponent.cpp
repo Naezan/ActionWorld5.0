@@ -34,6 +34,8 @@ UEquipmentInstance* FEquipmentList::AddEquipmentItem(TSubclassOf<UEquipmentDefin
 	NewItem.EquipmentDefinition = EquipmentDefinition;
 	NewItem.Instance = NewObject<UEquipmentInstance>(OwnerComponent->GetOwner(), InstanceType);  //@TODO: Using the actor instead of component as the outer due to UE-127172
 	Result = NewItem.Instance;
+	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red,
+	//FString::Printf(TEXT("%s"), *Result->GetInstigator()->GetName()));
 
 	//장비에 필요한 액터를 스폰해줍니다.
 	Result->SpawnEquipmentActors(EquipmentCDO->ActorsToSpawn);

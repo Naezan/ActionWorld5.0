@@ -28,6 +28,7 @@ void FGameplayTagStackList::AddStack(FGameplayTag Tag, int32 StackCount)
 			}
 		}
 
+		//찾지 못했을경우
 		//Emplace를 통해서 요소를 간결하게 추가
 		Stacks.Emplace(Tag, StackCount);
 	}

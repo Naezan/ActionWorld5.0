@@ -31,10 +31,11 @@ private:
 	friend FEquipmentList;
 	friend UEquipmentManagerComponent;
 
-	// 장착한 장비
+	// 장착한 장비 정보
 	UPROPERTY()
 		TSubclassOf<UEquipmentDefinition> EquipmentDefinition;
 
+	//장착한 장비
 	UPROPERTY()
 		UEquipmentInstance* Instance = nullptr;
 
