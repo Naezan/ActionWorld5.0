@@ -203,8 +203,8 @@ bool UCustomCharacterMovementComponent::SphereTraceAndStoreWallHit()
 		//벽과 부딪히면 임펙트포인트부터 위로 한번 검사합니다
 		if (bIsHit)
 		{
-			const FVector NewStart = Result.ImpactPoint + FVector(0, 0, 20);
-			const FVector NewEnd = NewStart + FVector(0, 0, -20);
+			const FVector NewStart = Result.ImpactPoint + UpdatedComponent->GetUpVector() * 20;
+			const FVector NewEnd = NewStart + UpdatedComponent->GetUpVector() * -20;
 
 			FHitResult NewResult;
 			bool bIsNewHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), NewStart, NewEnd, 10, TraceTypeQuery1,
@@ -493,7 +493,7 @@ bool UCustomCharacterMovementComponent::IsLocationWalkable(const FVector& CheckL
 bool UCustomCharacterMovementComponent::CanMoveToLedgeClimbLocation() const
 {
 	//앞으로120 위로 160만큼의 거리에서 아래로 체크합니다
-	const FVector VerticalOffset = FVector::UpVector * 180.f;
+	const FVector VerticalOffset = UpdatedComponent->GetUpVector() * 180.f;
 	const FVector HorizontalOffset = UpdatedComponent->GetForwardVector() * 120.f;
 
 	//캡슐에서 앞으로120 위로 160

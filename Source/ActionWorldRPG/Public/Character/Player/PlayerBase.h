@@ -27,6 +27,8 @@ class UInputAction;
 class UQuestWidget;
 class UQuestSystemComponent;
 
+DECLARE_MULTICAST_DELEGATE(FZeroSpeedDelegate)
+
 UCLASS()
 class ACTIONWORLDRPG_API APlayerBase : public AActionCharacterBase, public IInteractCrosshairInterface
 {
@@ -34,6 +36,9 @@ class ACTIONWORLDRPG_API APlayerBase : public AActionCharacterBase, public IInte
 
 public:
 	APlayerBase(const FObjectInitializer& ObjectInitializer);
+
+	//Delegate
+	FZeroSpeedDelegate OnZeroSpeed;
 
 	//어빌리티 관련프로퍼티
 	FGameplayTag CurrentWeaponTag;
@@ -214,6 +219,8 @@ protected:
 		bool bIsAiming = false;
 	UPROPERTY(BlueprintReadWrite, Category = "Character")
 		bool bIsReloading = false;
+	UPROPERTY(BlueprintReadWrite, Category = "Character")
+		bool bIsSliding = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 		bool bIsFirstPersonPerspective;

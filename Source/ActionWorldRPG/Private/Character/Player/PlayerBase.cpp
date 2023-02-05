@@ -352,6 +352,12 @@ void APlayerBase::Tick(float DeltaTime)
 		TraceUnderCrosshairs(HitResult);
 		HitTarget = HitResult.ImpactPoint;
 	}
+
+	if (OnZeroSpeed.IsBound() && FMath::IsNearlyEqual(MovementComponent->Velocity.Length(), 0))
+	{
+		OnZeroSpeed.Broadcast();
+		//OnZeroSpeed.Clear();
+	}
 }
 
 void APlayerBase::HandleWeaponPrimaryActionPressed()
